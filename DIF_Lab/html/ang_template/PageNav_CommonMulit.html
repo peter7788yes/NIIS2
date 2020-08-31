@@ -1,0 +1,19 @@
+﻿<section class="page"  ng-hide="VMD.isHide">
+    <ul class="pageul">
+        <li class="first" ng-click="changePageD({pgIndex:1})" ng-if="VMD.pgNow>1" >
+            <a title="第一頁" href="javascript:void(0);"></a>
+        </li>
+        <li class="prev" ng-click="changePageD({pgIndex:VMD.pgNow-1})" ng-if="VMD.pgNow>1">
+           <a title="上1頁" href="javascript:void(0);"></a>
+        </li>
+        <li ng-class="VMD.pgNow==item ? 'here' : '' " ng-repeat="item in VMD.pgArray" ng-click="VMD.pgNow != item && changePageD({pgIndex:item})" >
+            <a title="{{item}}"  href="javascript:void(0);" ng-bind="item"></a> 
+        </li>
+        <li class="next" ng-click="changePageD({pgIndex:VMD.pgNow+1})" ng-if="VMD.pgNow<VMD.pgCount" >
+             <a title="下1頁" href="javascript:void(0);"></a>
+        </li> 
+        <li class="last" ng-click="changePageD({pgIndex:VMD.pgCount})" ng-if="VMD.pgNow != VMD.pgCount"  >
+            <a title="最後一頁" href="javascript:void(0);"></a>
+        </li>
+    </ul>
+</section>

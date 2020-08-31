@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>自然人憑證</title>
+<script language="javascript" src="deployJava.js"></script>
+
+</head>
+<body>
+<div id="divLoading" 
+    style="display:none;border:0px #808080 solid;background-color:#ffffff;color:#000000;position:absolute;top:0px;left:center;width:250px;height:50px;z-order=0">
+  <img src="7.gif" style="vertical-align:middle;padding:6px"/>
+  元件載入中，請稍候...
+</div>
+<!--<input id="signatureButton" type="button" name="doSignature" value="啟動憑證" onClick="doSignature();" disabled="disabled"/>-->
+<script language="javascript">
+function CAClient() {
+
+    document.getElementById("divLoading").style.display = "block"; 
+   
+    var attributes = {
+            id: 'client',
+            width:0,
+            height:0
+    } ;
+
+    var parameters = {
+            code:'tw.com.hyweb.ca.CAClient',
+            codebase:'.',
+            archive:'CAClient.jar,lib/bcprov-jdk15-143.jar,lib/commons-codec-1.3.jar,lib/looks-2.2.2.jar,lib/P11JNI-2.1.jar,lib/native-1.0.0.jar',
+            mayscript:'true'
+    } ;
+    var version = '1.6' ;
+    deployJava.runApplet(attributes, parameters, version);
+}
+
+CAClient();
+
+function doSignature() {
+    var client = document.getElementById('client');
+    client.signature("test");
+}
+
+function CAClientInitialized() {
+	//var signatureButton = document.getElementById('signatureButton');
+	//signatureButton.disabled = false;
+	_oTag = document.getElementById("divLoading");
+    _oTag.style.display = "none";  // hide it.
+	doSignature();
+}
+
+function updateSignature(message, signature) {
+	alert("message: \n" + message);
+	alert("signature: \n" + signature);
+}
+
+function signatureResult(signature) {
+	//alert("signatureResult: \n" + signature);
+	//window.opener.getCDKey(signature);
+	parent.getCDKey(signature);
+}
+
+function verifyResult(successful) {
+	alert("verifyResult: " + successful);
+	parent.startCheckCA=0;
+}
+
+function errorOccurred(errorCode, errorMessage) {
+         
+		
+		if (errorCode=='1'){
+		  alert("PINCODE錯誤\n請注意密碼文字的大小寫或重新插入IC卡\n( 請注意輸入三次驗證失敗會自動鎖卡 )");
+		}else{
+            alert(errorMessage);
+		}
+		
+        parent.startCheckCA=0;
+        //window.opener.newwin.close();
+}
+
+
+</script>
+</body>
+</html>

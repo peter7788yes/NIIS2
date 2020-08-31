@@ -1,0 +1,15 @@
+﻿using System;
+
+public class N_Log
+{
+    public int ID { get; set; }
+    public int ThreadID { get; set; }
+    public string MachineName { get; set; }
+    public string LogName { get; set; }
+    public string LogLevel { get; set; }
+    public string LogMessage { get; set; }
+    public string CallSite { get; set; }
+    public string Exception { get; set; }
+    public string Stacktrace { get; set; }
+    public DateTime CreateDateTime { get; set; }
+}

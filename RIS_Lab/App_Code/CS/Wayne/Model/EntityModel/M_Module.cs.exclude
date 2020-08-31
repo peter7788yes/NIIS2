@@ -1,0 +1,26 @@
+﻿using Newtonsoft.Json;
+using System;
+
+public class M_Module
+{
+    [JsonIgnore]
+    public int ID { get; set; }
+
+    [JsonProperty(PropertyName = "c1")]
+    public string ModuleName { get; set; }
+
+    [JsonProperty(PropertyName = "c1")]
+	public string PageUrl { get; set; }
+
+    [JsonProperty(PropertyName = "c1")]
+	public int OrderNum { get; set; }
+
+    [JsonProperty(PropertyName = "c1")]
+    public string ModuleDescript { get; set; }
+
+    [JsonProperty(PropertyName = "c1")]
+    public int PID { get; set; }
+
+    [JsonProperty(PropertyName = "c1")]
+	public bool IsShow { get; set; }
+}

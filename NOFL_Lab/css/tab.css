@@ -1,0 +1,26 @@
+@charset "utf-8";
+/* CSS Document */
+
+.tab { margin: 0px 10px 40px 10px; padding: 0px; font-size: 1em; text-decoration: none; }
+.tab  ul { position: relative; margin: 10px 0 0; padding: 0px; background-color: transparent; }
+.tab  ul > li { list-style: none; float: left; margin: 0 5px 0 0; }
+.tab  ul > li > a { padding: 8px 15px; color: #999; text-decoration: none; border: 1px solid #CCC; display: block; }
+.tab > ul > li > ul { display: none; left: 0; }
+.tab .here > ul { display: block; background-color: #fff }
+.tab .here > a { color: #333; background-color: #FFC; border-bottom: 1px solid #fff; position: relative; z-index: 99 }
+.tab > ul > li > ul { color: #666; width: 100%; margin: -1px 0 0 0; border-top: 1px solid #ccc; padding: 5px 0 0 0; position: relative; z-index: 9 }
+.tab ul li ul li { clear: both; float: none; }
+/*--*/
+img { border: 0; }
+/*----path修改*/
+.tab ul li ul li .path { margin: 10px 0 5px 5px }
+/*----formTb修改*/
+.tab .formTb { margin: 0 0px 10px; border: none }
+.tab .formTb td { padding: 3px 5px; }
+/*----page修改*/
+.tab ul li ul li .page ul li { float: left; clear: none; }
+.tab .page ul li a { padding: 2px 6px 2px; }
+.tab .page ul li.first a, .page ul li.last a, .page ul li.prev a, .page ul li.prevTen a, .page ul li.next a, .page ul li.nextTen a { padding: 2px 0; border: none; height: 23px; width: 23px; }
+/*-*/
+.tab .list01 ul li { margin: 0 0 10px 0 }
+.tab .listTb { margin: 0 }

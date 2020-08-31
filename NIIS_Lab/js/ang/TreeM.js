@@ -1,0 +1,4 @@
+/*! NIIS 2016-05-09 */
+
+angular.module("TreeM",[]).directive("treeView",[function(){return{restrict:"E",templateUrl:"/html/ang_template/TreeView.html",scope:{selectedItem:"=",treeData:"=",canChecked:"=",textField:"@",itemClicked:"&",itemCheckedChanged:"&",itemTemplateUrl:"@"},controller:["$scope",function(a){a.itemExpended=function(a,b){a.$$isExpend=!a.$$isExpend,b.stopPropagation()},a.getItemIcon=function(b){var c=a.isLeaf(b);return c?"glyphicon glyphicon-leaf":b.$$isExpend?"glyphicon glyphicon-minus":"glyphicon glyphicon-plus"},a.isLeaf=function(a){return!a.children||!a.children.length},a.warpCallback=function(b,c,d){(a[b]||angular.noop)({$item:c,$event:d})}}]}}]);
+//# sourceMappingURL=TreeM.js.map

@@ -1,0 +1,50 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MasterPage.master.cs" Inherits="MasterPage" %>
+<%@ Import Namespace="System.Web.Optimization" %>
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+  
+  <style>
+      @charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}
+  </style>
+  <%--  <link href="../../css/angular-csp.css" rel="stylesheet" />--%>
+
+  <%--  <script>
+        var isTop = (self == top);
+        if (isTop && <%=BanSingleUsed %>) {
+                location.href = '<%=RedirectPath %>';
+            }
+    </script>   --%> 
+
+    <asp:ContentPlaceHolder id="headJsCP" runat="server"></asp:ContentPlaceHolder> 
+   
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>全國性預防接種資訊管理系統</title>
+  
+    <%-- CSS --%>
+
+    <%--<%:Styles.Render("~/bundles/MasterPage_CSS")%>--%>
+    <asp:ContentPlaceHolder id="cssCP" runat="server"></asp:ContentPlaceHolder>
+
+</head>
+<body <asp:ContentPlaceHolder id="bodyClassCP" runat="server"></asp:ContentPlaceHolder> >
+
+    <%-- CT --%>
+    <div id="MasterApp" ng-controller="MasterController" ng-cloak></div>
+    <asp:ContentPlaceHolder id="ctCP" runat="server"></asp:ContentPlaceHolder>
+   
+
+    <%-- JS --%>
+<%--    <%:Scripts.Render("~/bundles/MasterPage_JS")%>--%>
+    <%--<div
+        data-angular-treeview="true"
+        data-tree-id="abc"
+        data-tree-model="treedata"
+        data-node-id="id"
+        data-node-label="label"
+        data-node-children="children" >
+    </div>--%>
+    <asp:ContentPlaceHolder id="jsCP" runat="server"></asp:ContentPlaceHolder>
+</body>
+</html>

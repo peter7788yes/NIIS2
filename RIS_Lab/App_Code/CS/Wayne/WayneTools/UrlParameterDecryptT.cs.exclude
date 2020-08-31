@@ -1,0 +1,42 @@
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Web;
+using System.Web.Configuration;
+
+public class UrlParameterDecryptT 
+{
+
+    public UrlParameterDecryptT()
+	{
+	
+	}
+    public T GetUrlSecret<T>(string EncryptedString, TimeSpan DeltaDatePeriod, int Checksum) where T :BaseUrlSecret,new()
+    {
+        T mySecretObject = new T();
+        
+        //加密後的checksum，可以拿掉
+        if (IsValidChecksum(EncryptedString, Checksum))
+        {
+            //未實施解密
+            //mySecretObject.EncryptedString = EncryptedString;
+            //實施解密
+            mySecretObject.EncryptedString = QueryStringEncryptToolS.Decrypt(EncryptedString);
+
+            mySecretObject.DeltaDatePeriod = DeltaDatePeriod;
+            mySecretObject = mySecretObject.GetObject<T>();
+        }
+
+        return mySecretObject;
+    }
+
+    private bool IsValidChecksum(string EncryptedString, int Checksum)
+    {
+        //return EncryptedString.Length > 0 && EncryptedString.Length == Checksum && Checksum > 0;
+        return EncryptedString.Length == Checksum;
+    }
+
+   
+}

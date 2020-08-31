@@ -1,0 +1,83 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MasterPage.master.cs" Inherits="MasterPage" %>
+<%@ Import Namespace="System.Web.Optimization" %>
+
+<!DOCTYPE  html>
+<html>
+<head>
+   <style>
+        @charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}
+
+        .replaceA {
+            color: #b5403c;
+            text-decoration: underline;
+            cursor:pointer;
+        }
+        .leftReplaceA {
+            padding: 0 23px 0 0;
+            display: block;
+            color: #333;
+            text-decoration: none;
+            cursor:pointer;
+        }
+        .pathReplaceA:after {
+            content: " 》";
+            color: #333;
+            text-decoration: none;
+            cursor:pointer;
+        }
+        .pathReplaceA:hover {
+            color: #C00;
+            cursor:pointer;
+        }
+        .tree ul li span.here  {
+            background-color: #97C351;
+            background-image: url(/images/tree_here.gif);
+            background-repeat: no-repeat;
+            background-position: right center;
+        }
+
+ 
+   </style>
+   <%--  <link href="../../css/angular-csp.css" rel="stylesheet" />--%>
+ 
+  <%--  <script>
+        var isTop = (self == top);
+        if (isTop && <%=BanSingleUsed %>) {
+                location.href = '<%=RedirectPath %>';
+            }
+    </script>   --%> 
+
+    <asp:ContentPlaceHolder id="headJsCP" runat="server"></asp:ContentPlaceHolder> 
+   
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>全國性預防接種資訊管理系統</title>
+    <!--[if lt IE 9]>
+        <script src="js/other/html5.js"></script>
+    <![endif]-->
+    <%-- CSS --%>
+
+    <%--<%:Styles.Render("~/bundles/MasterPage_CSS")%>--%>
+    <asp:ContentPlaceHolder id="cssCP" runat="server"></asp:ContentPlaceHolder>
+
+</head>
+<body <asp:ContentPlaceHolder id="bodyClassCP" runat="server"></asp:ContentPlaceHolder> >
+
+    <%-- CT --%>
+    <div id="MasterApp" ng-controller="MasterController"></div>
+    <asp:ContentPlaceHolder id="ctCP" runat="server"></asp:ContentPlaceHolder>
+   
+
+    <%-- JS --%>
+<%--    <%:Scripts.Render("~/bundles/MasterPage_JS")%>--%>
+    <%--<div
+        data-angular-treeview="true"
+        data-tree-id="abc"
+        data-tree-model="treedata"
+        data-node-id="id"
+        data-node-label="label"
+        data-node-children="children" >
+    </div>--%>
+    <asp:ContentPlaceHolder id="jsCP" runat="server"></asp:ContentPlaceHolder>
+</body>
+</html>

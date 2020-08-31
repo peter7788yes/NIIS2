@@ -1,0 +1,20 @@
+﻿using Newtonsoft.Json;
+using System;
+
+public class BCGRecordDataVM
+{
+    [JsonProperty(PropertyName = "I")]
+    public int ID { get; set; }
+
+    [JsonProperty(PropertyName = "BID")]
+    public int BCGSchoolID { get; set; }
+
+    [JsonProperty(PropertyName = "KN")]
+    public int KidNumber { get; set; }
+
+    [JsonProperty(PropertyName = "KT")]
+    public int KidType { get; set; }
+
+    [JsonProperty(PropertyName = "RT")]
+    public int ResultType { get; set; }
+}

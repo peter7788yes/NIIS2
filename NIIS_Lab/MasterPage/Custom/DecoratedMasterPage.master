@@ -1,0 +1,30 @@
+﻿<%@ Master Language="C#" MasterPageFile="~/MasterPage/Custom/BaseMasterPage.master" AutoEventWireup="true" CodeFile="DecoratedMasterPage.master.cs" Inherits="MasterPage_Custom_DecoratedMasterPage" %>
+<%@ Import Namespace="System.Web.Optimization" %>
+
+<asp:Content ContentPlaceHolderID="baseHeadJsCP" Runat="Server">
+        <%=HeadScript %>
+        <asp:ContentPlaceHolder id="headJsCP" runat="server"></asp:ContentPlaceHolder>
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="baseCssCP" Runat="Server">
+        <% if (AutoIncludeCSS) {%>
+            <link href="/css/design.min.css" rel="stylesheet"/>
+        <% } %>
+        <asp:ContentPlaceHolder id="cssCP" runat="server"></asp:ContentPlaceHolder>
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="baseBodyClassCP" Runat="Server"><%:BodyClass %></asp:Content>
+
+<asp:Content ContentPlaceHolderID="baseCtCP" Runat="Server">
+        <asp:ContentPlaceHolder id="ctCP" runat="server"></asp:ContentPlaceHolder>
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="baseJsCP" Runat="Server">
+        <asp:ContentPlaceHolder id="jsCP" runat="server"></asp:ContentPlaceHolder>
+        <% if (AutoIncludeJS) {%>
+            <%:Scripts.Render("~/bundles/Common_JS")%>
+            <script src="<%:FileName %>"></script>
+        <% } %>
+</asp:Content>
+
+

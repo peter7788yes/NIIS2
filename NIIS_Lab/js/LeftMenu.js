@@ -1,0 +1,4 @@
+/*! NIIS 2016-05-09 */
+
+var menuCallback=function(a){window.parent.document.getElementById("cpIframe").src=a.pg},GenMenuRecursive=function(a,b){var c;b.c=b.c||[];for(var d=0;d<=b.c.length-1;d++)a.P==b.c[d].i&&(c=b.c[d]);null!=c?(c.c=c.c||[],c.c.push(a)):b.c.forEach(function(b){GenMenuRecursive(a,b)})};angular.module("MyApp",["angularTreeview"]).controller("MyController",["$scope",function(a){var b=(localStorage.getItem("leftMenuOrigin"),localStorage.getItem("leftMenu")),c=JSON.parse(b);if(void 0!=b&&myTreeDataString==b)a.treedata=c;else{var d={},e=[];localStorage.setItem("leftMenuOrigin",myTreeDataString),myTreeDataObj.forEach(function(a){0==a.P?(e.push(a),d=a,d.c=d.c||[]):null!=d&&(d.i==a.P?(d.c=d.c||[],d.c.push(a)):GenMenuRecursive(a,d))}),a.treedata=e,localStorage.setItem("leftMenu",JSON.stringify(e))}}]),angular.bootstrap(document.getElementById("MyApp"),["MyApp"]);
+//# sourceMappingURL=LeftMenu.js.map

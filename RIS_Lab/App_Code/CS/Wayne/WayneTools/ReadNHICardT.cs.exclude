@@ -1,0 +1,98 @@
+﻿using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace WayneTools
+{
+    public class ReadNHICardT
+    {
+        //C# 讀取健保卡基本資料─晶片讀卡機
+        public struct SCARD_IO_REQUEST
+        {
+            public int dwProtocol;
+            public int cbPciLength;
+        }
+
+        //引用 PC/SC(Personal Computer/Smart Card) API WinScard.dll
+        [DllImport("WinScard.dll")]
+        public static extern int SCardEstablishContext([In]Int32 dwScope,[In]int nNotUsed1, [In]int nNotUsed2, [In, Out]ref int phContext);
+        [DllImport("WinScard.dll")]
+        public static extern int SCardReleaseContext(int phContext);
+        [DllImport("WinScard.dll")]
+        public static extern int SCardConnect(int hContext, string cReaderName,uint dwShareMode, uint dwPrefProtocol, ref int phCard, ref int ActiveProtocol);
+        [DllImport("WinScard.dll")]
+        public static extern int SCardDisconnect(int hCard, int Disposition);
+        [DllImport("WinScard.dll")]
+        public static extern int SCardListReaders(int hContext, string cGroups,ref string cReaderLists, ref int nReaderCount);
+        [DllImport("WinScard.dll")]
+        public static extern int SCardTransmit(int hCard,ref SCARD_IO_REQUEST pioSendPci, byte[] pbSendBuffer, int cbSendLength,ref SCARD_IO_REQUEST pioRecvPci, ref byte pbRecvBuffer, ref int pcbRecvLength);
+
+
+        public string GetCardNumber()
+        {
+            int ContextHandle = 0;
+            int CardHandle = 0;
+            int ActiveProtocol = 0;
+            int ReaderCount = -1;
+            string ReaderList = string.Empty; //讀卡機名稱列表
+            SCARD_IO_REQUEST SendPci, RecvPci;
+            byte[] SelectAPDU = { 0x00, 0xA4, 0x04, 0x00, 0x10, 0xD1, 0x58, 0x00, 0x00, 0x01, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x00 };
+            byte[] ReadProfileAPDU = { 0x00, 0xca, 0x11, 0x00, 0x02, 0x00, 0x00 };
+            byte[] SelectRecvBytes = new byte[2]; //應回 90 00
+            int SelectRecvLength = 2;
+            byte[] ProfileRecvBytes = new byte[59]; //接收Profile的 Byte Array
+            int ProfileRecvLength = 59;
+
+
+            //建立 Smart Card API
+            if (SCardEstablishContext(0, 0, 0, ref ContextHandle) == 0)
+            {
+                //列出可用的 Smart Card 讀卡機
+                if (SCardListReaders(0, null, ref ReaderList, ref ReaderCount) == 0)
+                {
+                    //建立 Smart Card 連線
+                    if (SCardConnect(ContextHandle, ReaderList, 1, 2, ref CardHandle, ref ActiveProtocol) == 0)
+                    {
+                        SendPci.dwProtocol = RecvPci.dwProtocol = ActiveProtocol;
+                        SendPci.cbPciLength = RecvPci.cbPciLength = 8;
+                        //下達 Select Profile 檔的 APDU
+                        if (SCardTransmit(CardHandle, ref SendPci, SelectAPDU, SelectAPDU.Length,ref RecvPci, ref SelectRecvBytes[0], ref SelectRecvLength) == 0)
+                        //下達讀取Profile指令
+                        {
+                            if (SCardTransmit(CardHandle, ref SendPci, ReadProfileAPDU, ReadProfileAPDU.Length, ref RecvPci, ref ProfileRecvBytes[0], ref ProfileRecvLength) == 0)
+                            {
+
+                                return string.Format("健保卡ID:{0}\n姓名:{1}\n身份証字號:{2}\n生日:{3}/{4}/{5}\n姓別:{6}\n發卡日期:{7}/{8}/{9}",
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 0, 12),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 12, 6),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 32, 10),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 43, 2),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 45, 2),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 47, 2),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 49, 1),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 51, 2),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 53, 2),
+                                                  Encoding.Default.GetString(ProfileRecvBytes, 55, 2));
+
+                                //Console.WriteLine("健保卡ID:{0}\n姓名:{1}\n身份証字號:{2}\n生日:{3}/{4}/{5}\n姓別:{6}\n發卡日期:{7}/{8}/{9}",
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 0, 12),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 12, 6),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 32, 10),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 43, 2),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 45, 2),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 47, 2),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 49, 1),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 51, 2),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 53, 2),
+                                //                  Encoding.Default.GetString(ProfileRecvBytes, 55, 2));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return "";
+            //Console.ReadKey();
+        }
+    }
+}

@@ -1,0 +1,129 @@
+﻿@charset "utf-8";
+/* CSS Document */
+
+/*--------------------------formTb*/
+.formTb { padding: 3px 0 5px; margin: 0 10px 10px; border-bottom: 2px solid #ccc; border-top: 2px solid #ccc; background-color: #fff; position: relative; clear: both }
+.formTb2 { border-top: none; margin: 10px; padding: 3px 0 15px; border-bottom: 2px dotted #ccc }
+.formTb table { border-collapse: collapse; width: auto; background-color: #fff; width: 100%; }
+.formTb table caption { margin: 0 0 10px 0; }
+.formTb table th { padding: 5px 6px; text-align: left; width: 80px; white-space: nowrap; color: #333; vertical-align: top; font-weight: normal; }
+.formTb table th.aCenter { text-align: center; padding: 5px 6px; background-color: #E8E8E8 }
+.formTb table th.aRight { text-align: right }
+.formTb table td { padding: 5px 6px 0; vertical-align: top; color: #333; line-height: 150% }
+.formTb table td.aCenter { text-align: center }
+.formTb table td.aRight { text-align: right }
+.formTb table td input[type="text"] { border: 1px solid #e3e1e1; padding: 2px 6px 4px; margin: 0 5px 5px 0 }
+.formTb table td input[type="email"] { border: 1px solid #e3e1e1; padding: 2px 6px 4px; margin: 0 5px 5px 0 }
+.formTb table td input[type="number"] { border: 1px solid #e3e1e1; padding: 2px 6px 4px; margin: 0 5px 5px 0 }
+.formTb table td input.text01 { width: 98%; }
+.formTb table td input.text02 { width: 200px }
+.formTb table td input.text03 { width: 70%; }
+.formTb table td input[type="file"] { width: 280px; border: 1px solid #e3e1e1; background-color: #fff; margin: 0 5px 5px 0; font-family: "微軟正黑體", Arial, Helvetica, sans-serif; font-size: 0.938em }
+.formTb table td textarea { border: 1px solid #e3e1e1; padding: 2px 6px 4px; margin: 0 5px 5px 0; vertical-align: top }
+.formTb table td textarea.textarea01 { height: 250px; margin: 0 10px 0 0 }
+.formTb table td textarea.textarea02 { width: 98%; height: 246px }
+.formTb table input[type="checkbox"] { width: 15px; height: 15px; vertical-align: middle }
+.formTb table td .blank { margin: 0 8px 0 0; }
+.formTb table td select { margin: 0 5px 5px 0; border: 1px solid #e3e1e1; padding: 2px 0px; }
+.formTb table td select.select { width: 98%; }
+.formTb table td select.select2 { width: 150px; height: 140px; margin: 0 0 5px }
+.formTb .btn { padding: 0px 10px; height: 26px; }
+.formTb img { vertical-align: middle }
+.formTb .link { margin: 0 15px 0 0; background-image: url(/images/icon03.gif); background-repeat: no-repeat; background-position: 0 6px; padding: 0 0 0 10px }
+.formTb table th.width01 { width: 120px; background-color: #F0F0F0 }
+.formTb .image { display: block; margin: 0 0 10px 0 }
+.formTb .image img { width: 300px }
+.formTb .image span img { width: auto; margin: 0 15px; vertical-align: bottom }
+.formTb .border { border: 1px solid #e3e1e1; }
+.formTb table table th, .formTb table table td { padding: 7px 6px; }
+/*-*/
+.formTb3 { }
+.formTb3 table th, .formTb3 table td { border: 1px dotted #ccc }
+.formTb3 table th { background-color: #E8E8E8 }
+.formTb3 table td table th, .formTb3 table td table td { border: none }
+.formTb3 table td table th { width: 80px; background-color: #FFF }
+.formTb3 table td input.text01 { width: 95%; }
+.formTb3 table td input.text02 { width: 30%; }
+.formTb3 table td input.text03 { width: 70%; }
+.formTb table td table td label { display: inline-block; margin: 0 10px 0 0 }
+.formTb table td table td label input { margin: 0 5px 5px 0 }
+.btnblock { margin: 0 0 5px 0; clear: both }
+.btnblock2 { margin: 0 10px 5px 0; border: 1px solid #ccc; padding: 2px 5px }
+.formTb hr { margin: 15px 0; }
+/*-*/
+.formTb4 { margin: 5px 0 }
+.formTb4 table { border: 1px solid #ccc }
+.formTb .formTb4 table th { border: 1px solid #ccc; padding: 3px 6px; background-color: #E8E8E8; text-align: center }
+.formTb .formTb4 table td { border: 1px solid #ccc; padding: 3px 6px; }
+/*-*/
+.formTb5 { border: 1px solid #ccc; padding: 10px 0 }
+/*-*/
+.formTb3 table td table.choose { border: 1px solid #E8E8E8; width: 100px; margin: 0 0 10px 0; height: 250px; }
+.formTb3 table td table.choose th { border: 1px solid #E8E8E8; background-color: #FFFFD9; }
+.formTb3 table td table.choose td { border: 1px solid #E8E8E8 }
+/*-*/
+.formTb6 { border: 1px solid #ccc; padding: 0px 0 }
+/*-*/
+.button02 { margin: 70px 0 0 0 }
+.button02 ul { margin: 0; padding: 0; }
+.button02 ul li { list-style-type: none; margin: 0 0 10px 0; }
+.button02 ul li a { display: block; text-decoration: none; }
+.button02 ul li a.join { background-image: url(/images/icon_join.png); background-repeat: no-repeat; background-position: 0 0; color: #333; padding: 12px 0px 10px 10px; width: 46px }
+.button02 ul li a.join:hover { background-image: url(/images/icon_join_hover.png); color: #333; }
+.button02 ul li a.delete { background-image: url(/images/icon_delete.png); background-repeat: no-repeat; background-position: 0 0; color: #333; padding: 12px 0px 10px 15px; width: 41px }
+.button02 ul li a.delete:hover { background-image: url(/images/icon_delete_hover.png); color: #333; }
+/*--------------------------listTb*/
+.listTb { padding: 3px; margin: 0 5px 10px; clear: both; background-color: #fff }
+.Content2 .listTb { margin-top: 10px }
+.Content4 .listTb { margin: 0 0 20px 0 }
+.listTb table { border-collapse: collapse; width: 100%; border: 1px solid #ccc; }
+.listTb table caption { margin: 0 0 10px 0; text-align: left }
+.listTb table th { padding: 8px; white-space: nowrap; color: #333; vertical-align: top; border: 1px solid #ccc; background-color: #e1e0e0; text-align: center }
+.Content4 .listTb th { vertical-align: middle }
+.listTb table td { padding: 8px; vertical-align: top; color: #333; border: 1px solid #ccc; }
+.listTb table td.aCenter { text-align: center }
+.listTb table td.aRight { text-align: right }
+.listTb table td.redcolor { background-color: #FFE1E1 }
+.listTb table td input[type="text"] { border: 1px solid #ccc; padding: 2px 6px 5px; margin: 0 10px 0 0 }
+.listTb table td input[type="email"] { border: 1px solid #ccc; padding: 2px 6px 5px; margin: 0 10px 0 0 }
+.listTb table td input[type="number"] { border: 1px solid #ccc; padding: 2px 6px 5px; margin: 0 10px 0 0 }
+.listTb table td input.text01 { width: 250px }
+.listTb table td input.text02 { width: 450px }
+.listTb table input[type="checkbox"] { width: 15px; height: 15px; vertical-align: middle }
+.listTb table td textarea { border: 1px solid #ccc; padding: 2px 6px 5px; width: 450px }
+.listTb table td a { color: #b5403c; text-decoration: underline }
+.listTb table td a:hover { color: #C00; text-decoration: underline }
+.listTb table td .btn { padding: 0px 10px; height: 26px; }
+.listTb .pinkcolor { background-color: #FFE1E1 }
+.listTb .yellowcolor { background-color: #FFFFD9 }
+.listTb .redcolor { background-color: #F9C }
+.listTb .bluecolor { background-color: #CCFBFD }
+.listTb .orangecolor { background-color: #FFCC99 }
+.listTb .wordred { color: #C00 }
+.listTb .wordblue { color: #09C }
+/*-*/
+.listTb2 { height: 500px; overflow-y: auto; overflow-x: hidden; }
+/*----*/
+table.scroll { width: 100%; border-spacing: 0; border: 1px solid #ccc; border-collapse: collapse }
+table.scroll tbody, table.scroll thead { display: block; width: 100%; }
+table.scroll thead tr th { height: 30px; line-height: 30px; text-align: left; }
+table.scroll tbody { height: 500px; overflow-y: auto; overflow-x: hidden; }
+table.scroll tbody td, table.scroll thead th { width: 12%; border: 1px solid #ccc; white-space: nowrap; }
+table.scroll tbody td:last-child, table.scroll thead th:last-child { border-right: none; }
+/*-----------Calendar 日曆*/
+.formTb3 table td table.calendar { margin: 0 0 5px 0; border: 1px solid #ccc }
+.formTb3 table td table.calendar th { border: 1px solid #ccc; padding: 10px 5px }
+.formTb3 table td table.calendar td { border: 1px solid #ccc; padding: 10px 5px }
+.formTb3 table td table.calendar td:hover { background-color: #FFFFD9 }
+.calendar ul { margin: 5px auto 5px; padding: 0; width: 250px; overflow: hidden }
+.calendar ul li { list-style-type: none; float: left; margin: 0 5px 0 0; font-size: 1.25em }
+.calendar td label { text-align: right; display: block; width: 60px }
+.calendar td input[type="checkbox"] { margin: 0 0 0 10px; width: 15px; height: 15px; vertical-align: middle }
+.calendar td.weekend { background-color: #FFE1E1 }
+.calendar td.non { color: #CCC }
+.calendar td.leave { background-color: #D5EAEA }
+/*-----------------------組織管理分欄*/
+.organizationTb { margin: 0; padding: 0 }
+.organizationTb table { width: 100% }
+.organizationTb table td { vertical-align: top; padding: 0 0 0 10px }
+.organizationTb table td.leftbg { border-right: 1px solid #CCC; width: 320px; padding: 0 5px 0 0; }

@@ -1,0 +1,34 @@
+﻿<h2>PageNav2.html</h2>
+<style>
+li {
+    display: inline;
+}
+</style>
+<div class="page" ng-cloak>
+    <ul>
+       <!-- <li>
+             共<em>{{VMD.rdCount}}</em>筆資料，第<em>{{VMD.pgNow}}/{{VMD.pgCount}}</em>頁。
+        </li>-->
+        <li class="first" ng-click="changePageD({pgIndex:1})"  style="color:gray" >
+            <img src="" alt="第一頁" title="第一頁">
+        </li>
+        <li class="prev" ng-click="changePageD({pgIndex:VMD.pgNow-1})"  style="color:red">
+            <img src="" alt="上一頁" title="上一頁" >
+        </li>
+        <!--<li class="prev_range" ng-click="changePageD({pgIndex:(Math.floor(VMD.pgNow/VMD.pgRange)-1)*VMD.pgRange+1})" ng-if="VMD.pgNow>VMD.pgRange" style="color:orange">
+              <img src="" alt="上{{::VMD.pgRange}}頁" title="上{{::VMD.pgRange}}頁">
+        </li>-->
+        <li ng-repeat="item in VMD.pgArray" ng-click="VMD.pgNow != item && changePageD({pgIndex:item})" ng-style="VMD.pgNow == item  ? {'color':'red'} :{}">
+            {{::item}}
+        </li>
+       <!-- <li class="next_range" ng-click="changePageD({pgIndex:(Math.floor(VMD.pgNow/VMD.pgRange)+1)*VMD.pgRange+1})" ng-if="VMD.pgNow < VMD.pgCount && (VMD.pgCount - VMD.pgNow)>=VMD.pgRange" style="color:green">
+             <img src="" alt="下{{::VMD.pgRange}}頁" title="下{{::VMD.pgRange}}頁">
+        </li> -->
+        <li class="next" ng-click="changePageD({pgIndex:VMD.pgNow+1})" ng-if="VMD.pgNow<VMD.pgCount" style="color:blue">
+             <img src="" alt="下一頁" title="下一頁" >
+        </li> 
+        <li class="last" ng-click="changePageD({pgIndex:VMD.pgCount})" ng-if="VMD.pgNow != VMD.pgCount" style="color:gray" >
+             <img src="" alt="最後一頁" title="最後一頁">
+        </li>
+    </ul>
+</div>

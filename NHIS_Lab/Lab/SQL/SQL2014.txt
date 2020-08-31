@@ -1,0 +1,142 @@
+﻿#Always On
+
+
+#In-Memory
+SQL Server 2014
+(01)線上交易記憶體(In-Memory)內資料庫簡介
+{
+
+日前有機會去巨匠上揚志強老師的一日課程，課程中介紹了SQL2014許多新功能。
+其中重頭戲就是In Memory的新技術，課程中老師也透過LAB來展現這個新功能所帶來的效能。
+今天自己再實作一次順便記錄下來。
+ 
+目前In Memory Table的使用還有許多限制
+(1)大型資料欄位不支援，例如:Nvarchar(max)。
+(2)Index不可以Alter了，只能Drop後重建。
+(3)不支援Truncate Table，只能Delete。
+(4)Table一旦建立後就不可以修改Schema了。
+以下的微軟MVA網址有不錯的課程讓您了解該技術。
+ 
+以下實驗的Script都是透過楊志強老師課程中提供的Sample Code。
+
+
+#什麼值得調教
+網路通訊 10%
+T-SQL解釋 + 執行查詢 35%
+存取資源 + 交易，鎖定 45%
+I/O，執行序 %
+
+HDD => 64KB
+Memory =>連續8個8KB(因為要因應硬碟)
+
+Hekaton引擎
+=>記憶體最佳化的線上交易(OLTP)引擎
+=>有效的使用記憶體
+
+#transation log,去append(持久性) stream 傳送
+
+@高效能低處理資料
+#主記憶體最佳化
+=>最佳化記憶體內的資料
+
+@高效能低處理商業邏輯
+#T-SQL 編譯成機械碼
+=>透過C程式碼產生器和VC將T-SQL編譯成機械碼
+=>呼叫預存城市就是對應到DLL進入點
+=>在編譯時期最佳化
+
+
+
+@平滑地 scale-up
+#大量同時存取
+=>最佳化多版本同時存取控制，完整支援ACID
+=>核心引擎不使用鎖定機制
+=>沒有鎖定管理員，latches 或spinlocks
+
+@混和引擎，以整合既有的經驗
+#SQL Server整合
+=>相同的管理，監控機制
+
+
+@
+
+}
+(02)建立記憶體最佳化物件
+
+@建立資料表DDL
+Create table Customer(
+	CustomerID int not null
+		Primary Key NonClustered HASH With (Bucket_Count = 
+
+1000000), -- 1個8KB 百萬 直接吃掉8MB記憶體
+	Name nvarchar(250) not null
+		Index IName Hash(name) with (bucket_count= 1000000),
+	updateDate date not null index idexUpdate --行內定義B-Tree索引 
+
+ -- 查邊界比較好 查range ,between and
+
+)
+with(Memory_Optimized = on, Durability = Schema and Data)
+
+@建立記憶體最佳化資料表
+#建立資料表DDL
+#建立程式碼和編譯
+#產生資料表的DLL
+#載入資料表的DLL
+
+@檢視記憶體最佳化資料表相關資訊
+#透過SSMS
+#查詢DMV
+
+
+@建立預存程序DLL
+
+create procedure dbo.insertOrder @is Int,@data Datetime
+with
+   native_compilation --這是原生編譯的預存程序
+   schemabinding, --
+   execute as owner 
+as
+begin atomic --atomic區塊 ,若沒有交易建立一個，否則，建立一個savepoint
+with
+(transaction isolation level = snapshot,language = N'繁體中文') 
+
+--在此新增 T-SQL語法
+END
+
+
+
+@建立預存程序
+#建立預存程序DDL
+#查詢最佳化
+#產生程式碼與編譯
+#建立預存程序DLL
+#載入預存程序DLL
+
+
+=>執意識的T-SQL存取 (interOP)
+=>原生編譯的預存程序
+只存取記憶體最佳化資料表
+最佳效能
+有限的T-SQL功能
+何時使用:OLTP
+
+
+======================================
+
+select name ,object_id ,is_memory_optimized,duraablity
+durability-desc form sys.tables where type='u'
+
+
+
+--錯誤，無法事後建立建立索引
+create index idx on destination(age)
+drop index ix_name on destincation
+
+
+select 
+
+
+byronhu
+
+(03)記憶體內的資料結構

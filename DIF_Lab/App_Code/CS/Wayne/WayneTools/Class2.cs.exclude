@@ -1,0 +1,41 @@
+﻿    string provider = "RSAProtectedConfigurationProvider";
+    string section = "connectionStrings";
+ 
+    protected void btnEncrypt_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            Configuration confg = WebConfigurationManager.OpenWebConfiguration(Request.ApplicationPath);
+            ConfigurationSection confStrSect = confg.GetSection(section);
+            if (confStrSect != null)
+            {
+                confStrSect.SectionInformation.ProtectSection(provider);
+                confg.Save();
+            }
+            // the encrypted section is automatically decrypted!!
+            Response.Write("Configuration Section " + "<b>" + WebConfigurationManager.ConnectionStrings["MyConnString"].ConnectionString + "</b>" + " is automatically decrypted");
+        }
+        catch (Exception ex)
+        {
+   
+        }       
+    }
+ 
+    protected void btnDecrypt_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            Configuration confg = WebConfigurationManager.OpenWebConfiguration(Request.ApplicationPath);
+            ConfigurationSection confStrSect = confg.GetSection(section);
+            if (confStrSect != null && confStrSect.SectionInformation.IsProtected)
+            {
+                confStrSect.SectionInformation.UnprotectSection();
+                confg.Save();
+            }
+ 
+        }
+        catch (Exception ex)
+        {
+ 
+        }
+    }

@@ -1,0 +1,16 @@
+@charset "utf-8";
+body { width: 100%; height: 100%; margin: 0; padding: 0; background-color: #FAFAFA; font-family: "微軟正黑體", Arial, Helvetica, sans-serif; font-size: 0.813em/*13px*/ }
+* { box-sizing: border-box; -moz-box-sizing: border-box; }
+.page { text-align: center; width: 297mm; height: 200mm; padding: 5mm; margin: 5mm auto; border: 1px #D3D3D3 solid; border-radius: 5px; background: white; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); }
+ @page {
+ size: A4 landscape;
+}
+ @media print {
+html, body { width: 297mm; height: 210mm; }
+.page { text-align: center; margin: 0; border: 0; border-radius: 0; width: initial; height: initial; box-shadow: white; background: white; page-break-after: always; }
+}
+table { border-collapse: collapse; margin: auto; width:100% }
+thead > tr > th { border: 0px; }
+thead > tr > td { border: 1px solid #ccc; background-color: #e8e8e8; text-align: center; padding:3px 2px }
+tbody > tr > td { border: 1px solid #ccc; }
+thead tr th h1, thead tr th h2  { font-size: 1.25em; margin: 0; padding: 0; }

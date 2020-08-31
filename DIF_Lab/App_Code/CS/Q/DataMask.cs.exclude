@@ -1,0 +1,251 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.VisualBasic;
+namespace DataMask
+{
+    public enum MaskType
+    {
+        Name,
+        Creditcard,
+        Addr,
+        Id,
+        Tel
+    }
+
+    class UtilDataMask
+    {
+        /// <summary>
+        /// 資料遮罩
+        /// </summary>
+        ///<param name="val">需遮罩之字串
+        ///<param name="Type">選擇需遮罩之型態:手機,地址....
+        /// <returns>加密過後的字串</returns>
+        public static string MaskValue(string val, MaskType Type)
+        {
+
+            switch (Type.ToString())
+            {
+                case "Name":
+                    val = MaskName(val);
+                    break;
+                case "Creditcard":
+                    val = MaskCreditcard(val);
+                    break;
+                case "Addr":
+                    val = MaskAddr(val);
+                    break;
+                case "Id":
+                    val = MaskId(val);
+                    break;
+                case "Tel":
+                    val = MaskTel(val);
+                    break;
+                default:
+                    break;
+            }
+
+            return val;
+        }
+        /// <summary>
+        /// 姓名遮罩包含英文姓名
+        /// </summary>
+        ///<param name="val">
+        /// 姓名
+        /// 
+        /// <returns>王O名</returns>
+        private static string MaskName(string val)
+        {
+            if (!string.IsNullOrEmpty(Strings.StrConv(val, VbStrConv.Narrow, 0)))
+            {
+                string maskstr, maskchar;
+                maskchar = null;
+                if (Regex.IsMatch(val, "[A-Za-z]"))
+                {
+                    if (val.IndexOf("-") > 1)
+                    {
+                        maskstr = val.Split('-')[1];
+                        val = val.Replace(maskstr, "*");
+                    }
+                    if (val.IndexOf(" ") > 1)
+                    {
+                        maskstr = val.Split(' ')[1];
+                        val = val.Replace(maskstr, "*");
+                    }
+                }
+                else
+                {
+
+                    int End = (int)(val.Length / 2);
+                    maskstr = val.Substring(1, End);
+                    for (int i = 0; i < maskstr.Length; i++)
+                    {
+                        maskchar = maskchar + "O";
+                    }
+                    val = val.Replace(maskstr, maskchar);
+                }
+            }
+            else
+            {
+
+                val = "";
+            }
+
+            return val;
+        }
+        /// <summary>
+        /// 信用卡遮罩--信用卡號=>前6後4不mask
+        /// </summary>
+        ///<param name="val">5555-2525-1266-2213
+        /// <returns>
+        /// 5555-25**-****-2213
+        /// </returns>
+        private static string MaskCreditcard(string val)
+        {
+            if (!string.IsNullOrEmpty(Strings.StrConv(val, VbStrConv.Narrow, 0)))
+            {
+
+                val = (Regex.IsMatch(val.Replace("-", ""), RegularExp.creditcard) ? val.Substring(0, 7) + "**-****" + val.Substring(14, 5) : "");
+
+            }
+            else
+            {
+
+                val = "";
+            }
+            return val;
+
+        }
+        /// <summary>
+        /// 地址=>留前6個字(Unicode)
+        /// </summary>
+        ///<param name="val">台南市中正路321巷7弄17號2F
+        /// <returns>台南市中正路***********</returns>
+        private static string MaskAddr(string val)
+        {
+            string maskstr, maskchar;
+            maskchar = null;
+            if (!string.IsNullOrEmpty(Strings.StrConv(val, VbStrConv.Narrow, 0)))
+            {
+                int End = (int)(val.Length - 6);
+                maskstr = val.Substring(6, End);
+                for (int i = 0; i < maskstr.Length; i++)
+                {
+                    maskchar = maskchar + "*";
+                }
+                val = val.Replace(maskstr, maskchar);
+
+            }
+            else
+            {
+
+                val = "";
+            }
+            return val;
+
+
+        }
+        /// <summary>
+        /// 身分證字號=>遮前五個字元
+        /// </summary>
+        ///<param name="val">A123456789
+        /// <returns>A1234*****</returns>
+        private static string MaskId(string val)
+        {
+            string maskstr, maskchar;
+            maskchar = null;
+            if (!string.IsNullOrEmpty(Strings.StrConv(val, VbStrConv.Narrow, 0)))
+            {
+                if (Regex.IsMatch(val, RegularExp.Id))
+                {
+                    int End = (int)(val.Length - 5);
+                    maskstr = val.Substring(5, End);
+                    for (int i = 0; i < maskstr.Length; i++)
+                    {
+                        maskchar = maskchar + "*";
+                    }
+                    val = val.Substring(0, 5) + maskchar;
+                }
+                else
+                {
+
+                    val = "";
+
+                }
+            }
+            else
+            {
+
+                val = "";
+            }
+            return val;
+
+
+        }
+        /// <summary>
+        /// 聯絡方式(電話) =>固定遮後四碼
+        /// </summary>
+        ///<param name="val">02-12345678
+        /// <returns>02-1234****</returns>
+        private static string MaskTel(string val)
+        {
+            string maskstr, maskchar;
+            maskchar = "****";
+            if (!string.IsNullOrEmpty(Strings.StrConv(val, VbStrConv.Narrow, 0)))
+            {
+                int tal = Regex.Replace(val, RegularExp.allsc, "").Length;
+                int Strl = tal - 4;
+                int minus = val.IndexOf("-") > 1 ? Strl + 1 : Strl;
+                maskstr = val.Substring(minus, 4); //;val.Substring(Strl, 4);
+                val = val.Substring(0, minus) + maskchar;
+
+            }
+            else
+            {
+
+                val = "";
+            }
+            return val;
+
+
+        }
+
+    }
+}
+public struct RegularExp
+{
+    //所有特殊字元
+    public const string allsc = @"[\W_]+";
+    public const string Chinese = @"^[\u4E00-\u9FA5\uF900-\uFA2D]+$";
+    public const string Color = "^#[a-fA-F0-9]{6}";
+    public const string Date = @"^((((1[6-9]|[2-9]\d)\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\d|3[01]))|(((1[6-9]|[2-9]\d)\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\d|30))|(((1[6-9]|[2-9]\d)\d{2})-0?2-(0?[1-9]|1\d|2[0-8]))|(((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29-))$";
+    public const string DateTime = @"^((((1[6-9]|[2-9]\d)\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\d|3[01]))|(((1[6-9]|[2-9]\d)\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\d|30))|(((1[6-9]|[2-9]\d)\d{2})-0?2-(0?[1-9]|1\d|2[0-8]))|(((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29-)) (20|21|22|23|[0-1]?\d):[0-5]?\d:[0-5]?\d$";
+    public const string Email = @"\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*";
+    public const string Float = @"^(-?\d+)(\.\d+)?$";
+    public const string ImageFormat = @"\.(?i:jpg|bmp|gif|ico|pcx|jpeg|tif|png|raw|tga)$";
+    public const string Integer = @"^-?\d+$";
+    public const string IP = @"^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$";
+    public const string Letter = "^[A-Za-z]+$";
+    public const string LowerLetter = "^[a-z]+$";
+    public const string MinusFloat = @"^(-(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*)))$";
+    public const string MinusInteger = "^-[0-9]*[1-9][0-9]*$";
+    public const string Mobile = @"[0-9]{4}\-[0-9]{3}\-[0-9]{3}";
+    public const string NumbericOrLetterOrChinese = @"^[A-Za-z0-9\u4E00-\u9FA5\uF900-\uFA2D]+$";
+    public const string Numeric = "^[0-9]+$";
+    public const string NumericOrLetter = "^[A-Za-z0-9]+$";
+    public const string NumericOrLetterOrUnderline = @"^\w+$";
+    public const string PlusFloat = @"^(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*))$";
+    public const string PlusInteger = "^[0-9]*[1-9][0-9]*$";
+    public const string Telephone = @"[0-9]{2}\-[0-9]{7}";
+    public const string UnMinusFloat = @"^\d+(\.\d+)?$";
+    public const string UnMinusInteger = @"\d+$";
+    public const string UnPlusFloat = @"^((-\d+(\.\d+)?)|(0+(\.0+)?))$";
+    public const string UnPlusInteger = @"^((-\d+)|(0+))$";
+    public const string UpperLetter = "^[A-Z]+$";
+    public const string Url = @"^http(s)?://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?$";
+    public const string creditcard = @"^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\d{3})\d{11})$";
+    //([A-Z]|[a-z])\d{9}
+    public const string Id = @"([A-Z]|[a-z])\d{9}";
+}

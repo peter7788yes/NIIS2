@@ -1,0 +1,57 @@
+﻿前言
+魯蛇最近在蛇窩自學 ASP.NET MVC ，以完成一個進銷存為目標邊做邊學，當中當然需要開資料庫，有鑑於公司資料庫命名規則太魯造成本魯蛇開發效率降低，所以命名規則打算追隨參考文章的作者，站在巨人的肩膀上看得更遠，您說是吧。
+ 
+首先，幾個重要的大原則勝過數以千計的小原則。 
+ 
+Part 1
+ 
+命名
+資料表:Pascal 命名法(大駝峰式命名法)、結尾加s
+   範例:Products、Customers
+   群組分類式，Products_USA、Products_Mexico
+ 
+預存程序: usp<App Name>_[<Group Name >_]<Action><table/logical instance>
+   範例: uspProducts_UpdateProducts
+   說明:usp開頭，接資料表名、底線、接功能名
+ 
+觸發程序: TR_<TableName>_<action>
+   範例:TR_Orders_UpdateProducts
+   說明:TR開頭、底線、資料表名、功能名
+   補充:作者不推薦triggers
+ 
+索引: IX_<TableName>_<columns separated by _>
+   範例: IX_Products_ProductID
+   說明:IX開頭、底線、接資料表名、底線、接欄位名
+ 
+主索引鍵:PK_<TableName>
+   範例: PK_Products
+ 
+外部索引建:FK_<TableName1>_<TableName2>
+  範例:FK_Products_Orderss
+  說明:DF開頭、底線、主資料表名、關聯資料表名
+ 
+預設值:DF_<TableName>_<ColumnName>
+   範例::DF_Products_Quantity
+   說明:DF開頭、底線、資料表明、底線、欄位名
+ 
+欄位名:如果該欄位參考其他表格命名為該表格名ID
+ 
+通用規則:
+   不要有空白、不要用關鍵字、預存程序不要以sp_開頭命名，用來區分您自己的和系統的預存程序，在資料表名前綴上擁有者名
+ 
+結構:
+   每個表個都要有主索引鍵，命名為ID、第三階正規化(Do not compromise on performance to reach third normal form. Sometimes, a little de-normalization results in better performance. 無法確定是一定要到三階還是沒必要..我猜是要吧)、以前的text型態改成varchar(max)型態、而varchar(max)預設值不要是null、預存程序和主要使用的資料表放在同一資料庫
+ 
+格式:
+   SQL指令用大寫，SELECT * FROM Products(本魯蛇很不喜歡這樣寫，看得慢打得慢..但還是必須遵守)、括住字串用單引號、其他是一些註解和可讀性的東西就不翻了，最後講到left join:
+(X)
+SELECT *
+FROM Table1, Table2
+WHERE Table1.d = Table2.c
+ 
+(O)
+SELECT *
+FROM Table1
+INNER JOIN Table2 ON Table1.d = Table2.c
+ 
+第一篇文章就先這樣吧，先交付有價值的東西，改天再來重構。-2014/10/08

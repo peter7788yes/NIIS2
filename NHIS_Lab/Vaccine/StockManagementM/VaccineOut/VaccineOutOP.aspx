@@ -1,0 +1,1 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="VaccineOutOP.aspx.cs" Inherits="Vaccine_StockManagementM_VaccineOut_VaccineOutOP" %>

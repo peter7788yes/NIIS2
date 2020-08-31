@@ -1,0 +1,18 @@
+﻿<h2>TableGrid1.html</h2>
+{{VMD.tbData.length}}
+{{1435558988140 | LongTaiwanDate:true}}<br/>
+<table  border="1" ng-cloak>
+    <thead>
+        <tr>
+            <th ng-repeat="item in VMD.tbHeadArray  track by $index">{{item}}</th>
+        </tr>
+    </thead>
+    <tfoot></tfoot>
+    <tbody>
+        <tr ng-repeat="record in VMD.tbData track by $index" data-ng-init="tbHeadArray=VMD.tbHeadArray;tbFieldArray=VMD.tbFieldArray;isHtml=VMD.isHtml;IsDate=IsDate">
+            <!--<td ng-repeat="field in tbHeadArray" ng-if="isHtml==true"  ng-bind-html="record[field]"></td>
+            <td ng-repeat="field in tbHeadArray" ng-if="isHtml==false"  ng-bind="record[field] | LongTaiwanDate:true"></td>-->
+            <td ng-repeat="field in tbFieldArray"   ng-bind-html="IsDate(record[field]) ?(record[field]) : record[field]"></td>
+        </tr>
+    </tbody>
+</table>

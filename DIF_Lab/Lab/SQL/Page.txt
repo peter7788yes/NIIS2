@@ -1,0 +1,92 @@
+﻿#取得第10筆以後的資料
+#關鍵字: offset 10 rows
+{
+    select * from User order by ID offset 10 rows
+}
+
+#從第1筆資料開始，取10筆資料
+#關鍵字: fetch next 10 rows only
+{
+    select * from User order by ID offset 0 rows fetch next 10 rows only
+}
+
+
+#使用變數，從第11筆資料開始，取20筆資料
+#關鍵字: 用變數代替 
+{
+    DECLARE @skip tinyint = 10
+    DECLARE @take tinyint = 20
+
+    select * from User order by ID offset @skip rows fetch next @take rows only
+}
+
+
+#子查詢用法
+{
+    DECLARE @myTable TABLE (
+        C_UID INT,
+        C_FETCH INT
+    );
+
+    insert into @myTable values(1, 20);
+    select * from User order by ID offset 0 rows fetch next  (select C_FETCH from @myTable where C_UID = 1) ROWS ONLY;
+}
+
+#在 SQL SERVER 2012 以前的用法，取得11到20的資料
+{
+    select * from (
+        select row_number() over (ordder by ID) as index ,* from User 
+    ) as t where index > 10 and index <= 20
+    ) as t --where index between 11 and 20
+}
+
+#T2寫法
+{
+    ALTER PROCEDURE [dbo].[usp_A_RFIDDataListB]
+	@OrgID int, 
+	@DeptCode nvarchar(50),
+	@RFID nvarchar(500),
+	@GlobalNO nvarchar(500),
+	@AnimalStatus nvarchar(20),
+	@IsUsed nvarchar(20),
+	@PageSize int, 
+	@PageIndex int
+    AS
+    BEGIN
+	    SET NOCOUNT ON;
+	
+
+        ---算頁數
+        ---index從0開始
+        ---size為10
+	    SELECT *
+	    FROM 
+	    (
+		    SELECT ROW_NUMBER() OVER (ORDER BY 序號 DESC) as '序號',ID,RFID電子耳標號碼,金門防疫標號碼, 動物狀態, 電子耳標使用狀態
+		    FROM fn_A_RFIDDataList(@OrgID, @DeptCode)
+		    where (RFID電子耳標號碼 like '%'+(SELECT [data] FROM fn_slip_str(@RFID,','))+'%' or
+		    金門防疫標號碼 like '%'+(SELECT [data] FROM fn_slip_str(@GlobalNO,','))+'%') and
+		    majorstate IN(SELECT [data] FROM fn_slip_str(@AnimalStatus,',')) --and
+		    --IsUsed IN(SELECT [data] FROM fn_slip_str(@IsUsed,','))
+        ) MainRowNum 
+        WHERE MainRowNum.序號 BETWEEN @PageIndex*@PageSize+1 AND ((@PageIndex+1)*@PageSize);
+    
+
+        ---算總數
+        ---不排ROW_NUMBER()
+        ---不篩選條件
+        select count(1)
+	    from 
+	    (
+            ---全部的資料筆數
+		    SELECT 序號,ID,RFID電子耳標號碼,金門防疫標號碼, 動物狀態, 電子耳標使用狀態
+		    FROM fn_A_RFIDDataList(@OrgID, @DeptCode)
+		    where (RFID電子耳標號碼 like '%'+(SELECT [data] FROM fn_slip_str(@RFID,','))+'%' or
+		    金門防疫標號碼 like '%'+(SELECT [data] FROM fn_slip_str(@GlobalNO,','))+'%') and
+		    majorstate IN(SELECT [data] FROM fn_slip_str(@AnimalStatus,',')) --and
+        ) MainRowNum2 
+   
+    
+    END
+
+}

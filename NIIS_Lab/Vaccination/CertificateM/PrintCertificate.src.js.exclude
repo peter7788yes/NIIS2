@@ -1,0 +1,159 @@
+﻿$(function () {
+    $(document).on("click", "#AddBtn", function (e) {
+        location.href = "/CaseMaintain/UserProfile.aspx";
+        e.preventDefault();
+        return false;
+    });
+
+    $(document).on("click", "#SearchBtn", function (e) {
+        e.preventDefault();
+        return false;
+    });
+});
+
+angular.module("MyApp", ["PageM", "FilterM","ToolM"])
+         .controller("MyController", ["$scope", "PageProvider", "ToolProvider", function ($scope, PageProvider, TPM) {
+
+             $scope.PM = PageProvider;
+             $scope.TM = {};
+             $scope.VM = {};
+
+             $scope.VM.CountyAry = [];
+             $scope.VM.SelectCounty = "0";
+
+             $scope.VM.TownAry = [];
+             $scope.VM.SelectTown = "0";
+
+             $scope.changePage = function (pageIndex) {
+                 $("#tmBlock").show();
+                 var pgData = $scope.PM.genPageData(pageIndex);
+                 var postData = {};
+
+                 postData.BirthDateS = $("#BirthDateS").val();
+                 postData.BirthDateE = $("#BirthDateE").val();
+                 postData.CaseName = $("#CaseName").val();
+                 postData.CaseIdNo = $("#CaseIdNo").val();
+                 postData.HouseNo = $("#HouseNo").val();
+
+                 postData.ContactName = $("#ContactName").val();
+                 postData.ContactIdNo = $("#ContactIdNo").val();
+                 postData.ContactBirthDate = $("#ContactBirthDate").val();
+
+                 postData = $scope.PM.filterPageData(pgData, postData);
+
+                 $scope.PM.changePage("/Vaccination/CertificateM/PrintCertificateOP.aspx", postData, function (data) {
+                     $scope.TM.data = data.message;
+                     $scope.$apply(function () { });
+                 });
+             };
+
+             $scope.changePage(1);
+
+             $scope.goDetail = function (record) {
+                 var keys = [];
+                 var values = [];
+                 keys[0] = "i";
+                 values[0] = record["C"];
+                 doPOST("/Vaccination/RecordM/RegisterData_Detail.aspx", keys, values);
+             };
+
+             $scope.goRecord = function (record) {
+                 var obj = {};
+                 obj['i'] = record["C"];
+                 TPM.doPOST("/Vaccination/CertificateM/ApplyDataRecord.aspx", obj, document.querySelector('#MyForm'));
+             };
+
+             $scope.goApplyData = function (record) {
+                 var obj = {};
+                 obj['i'] = record["C"];
+                 TPM.openWindowWithPost("/Vaccination/CertificateM/ApplyData.aspx", "AddVaccine", 930, 450, obj,document.querySelector('#MyForm'));
+             };
+
+             $scope.SelectCountyChange = function () {
+                 var postData = {};
+                 postData["a"] = "Town";
+                 postData["p"] = $("#SelectCounty").val();
+                 $.ajax({
+                     cache: false,
+                     type: "POST",
+                     url: "/Ashx/SystemAreaCodeOP.ashx",
+                     data: postData
+                 })
+                    .done(function (data) {
+                        data = data || [];
+                        setTimeout(function () {
+                            $scope.$apply(function () {
+                                if (data.length > 0) {
+                                    $scope.VM.TownAry = [].concat(data);;
+                                    $scope.VM.SelectTown = "0";
+                                }
+                                else {
+                                    $scope.VM.TownAry = [];
+                                    $scope.VM.SelectTown = "0";
+                                }
+                            });
+                        }, 1);
+                    })
+                    .fail(function (jqXHR, textStatus) {
+                    });
+             };
+
+             $scope.BindCounty = function () {
+                 var postData = {};
+                 postData["a"] = "County";
+                 $.ajax({
+                     cache: false,
+                     type: "POST",
+                     url: "/Ashx/SystemAreaCodeOP.ashx",
+                     data: postData
+                 })
+                    .done(function (data) {
+                        data = data || [];
+                        setTimeout(function () {
+                            $scope.$apply(function () {
+                                if (data.length > 0) {
+                                    $scope.VM.CountyAry = [].concat(data);
+                                    $scope.VM.SelectCounty = "0";
+                                }
+                                else {
+                                    $scope.VM.CountyAry = [];
+                                    $scope.VM.SelectCounty = "0";
+                                }
+                            });
+                        }, 1);
+                    })
+                    .fail(function (jqXHR, textStatus) {
+
+                    });
+             };
+
+             $scope.BindCounty();
+
+             $scope.openOrgs = function (record) {
+                 TPM.popUpWindow("/SelectSingleOrg.aspx", "SelectSingleOrg", 620, 450);
+             };
+
+             $scope.doReset = function () {
+                 $scope.VM.BirthDateS = '';
+                 $('#BirthDateS').val('');
+                 $scope.VM.BirthDateE = '';
+                 $('#BirthDateE').val('');
+                 $scope.VM.CaseName = '';
+                 $('#CaseName').val('');
+                 $scope.VM.CaseIdNo = '';
+                 $('#CaseIdNo').val('');
+                 $scope.VM.HouseNo = '';
+                 $('#HouseNo').val('');
+                 $scope.VM.ContactName = '';
+                 $('#ContactName').val('');
+                 $scope.VM.ContactIdNo = '';
+                 $('#ContactIdNo').val('');
+                 $scope.VM.ContactBirthDate = '';
+                 $('#ContactBirthDate').val('');
+
+                 $scope.changePage(1);
+             };
+}]);
+
+
+

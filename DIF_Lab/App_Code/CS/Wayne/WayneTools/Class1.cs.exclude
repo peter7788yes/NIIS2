@@ -1,0 +1,790 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Xml;
+
+namespace WayneTools
+{
+
+    public class SqlHelper
+    {
+        // Fields
+        public List<SqlParameter> OutParams;
+        public Dictionary<string, object> Params;
+
+        // Methods
+        public SqlHelper()
+        {
+            XmlDocument document = new XmlDocument();
+            string filename = HttpContext.Current.Server.MapPath("~/Web.config");
+            document.Load(filename);
+            XmlNode node = document.SelectNodes("/configuration/connectionStrings/add")[0];
+            this.ConnectionString = node.Attributes["connectionString"].Value;
+            this.Params = new Dictionary<string, object>();
+            this.OutParams = new List<SqlParameter>();
+        }
+
+        public SqlHelper(SqlConnection conn)
+        {
+            this.ConnectionString = conn.ConnectionString;
+            this.Params = new Dictionary<string, object>();
+            this.OutParams = new List<SqlParameter>();
+        }
+
+        public SqlHelper(string connName)
+        {
+            XmlDocument document = new XmlDocument();
+            string filename = HttpContext.Current.Server.MapPath("~/Web.config");
+            document.Load(filename);
+            XmlNode node = document.SelectSingleNode(string.Format("/configuration/connectionStrings/add[@name='{0}']", connName));
+            this.ConnectionString = node.Attributes["connectionString"].Value;
+            this.Params = new Dictionary<string, object>();
+            this.OutParams = new List<SqlParameter>();
+        }
+
+        public SqlHelper(string connName, bool IsApp)
+        {
+            this.ConnectionString = ConfigurationManager.ConnectionStrings[connName].ConnectionString;
+            this.Params = new Dictionary<string, object>();
+            this.OutParams = new List<SqlParameter>();
+        }
+
+        private void addParamsToCommand(DbCommand cmd)
+        {
+            foreach (KeyValuePair<string, object> pair in this.Params)
+            {
+                SqlParameter parameter = new SqlParameter(pair.Key, pair.Value);
+                cmd.Parameters.Add(parameter);
+            }
+            foreach (SqlParameter parameter2 in this.OutParams)
+            {
+                parameter2.Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(parameter2);
+            }
+        }
+
+        public bool DeleteData(string tableName, string condition)
+        {
+            string sql = string.Format("delete from [{0}] where {1}", tableName, condition);
+            return this.T_Execute(sql);
+        }
+
+        private bool execute(string text, CommandType cmdType)
+        {
+            bool flag;
+            using (SqlConnection connection = new SqlConnection(this.ConnectionString))
+            {
+                connection.Open();
+                SqlCommand cmd = new SqlCommand(text, connection)
+                {
+                    CommandType = cmdType
+                };
+                this.addParamsToCommand(cmd);
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    flag = true;
+                }
+                catch (SqlException exception)
+                {
+                    //JSHelper.Alert(exception.Message.Replace("\r", "").Replace("\n", ""));
+                    flag = false;
+                }
+            }
+            return flag;
+        }
+
+        public static void FillEntity(object model)
+        {
+            Page handler = HttpContext.Current.Handler as Page;
+            FillEntity(model, handler.Form);
+        }
+
+        public static void FillEntity<T>(List<T> list, DataTable dt)
+        {
+            if (list == null)
+            {
+                list = new List<T>();
+            }
+            foreach (DataRow row in dt.Rows)
+            {
+                T model = (T)typeof(T).GetConstructor(Type.EmptyTypes).Invoke(null);
+                FillEntity(model, row);
+                list.Add(model);
+            }
+        }
+
+        public static void FillEntity(object model, Control contain)
+        {
+            if (model == null)
+            {
+                throw new NullReferenceException();
+            }
+            ControlCollection controls = contain.Controls;
+            Type type = model.GetType();
+            foreach (Control control in controls)
+            {
+                string iD = control.ID;
+                if ((iD != null) && iD.StartsWith("S_"))
+                {
+                    string name = iD.Substring(2);
+                    PropertyInfo property = type.GetProperty(name);
+                    Type propertyType = type.GetProperty(name).PropertyType;
+                    TextBox box = control as TextBox;
+                    Label label = control as Label;
+                    if ((box != null) || (label != null))
+                    {
+                        property.SetValue(model, Convert.ChangeType(((ITextControl)control).Text, propertyType), null);
+                    }
+                    else
+                    {
+                        DropDownList list = control as DropDownList;
+                        if (list != null)
+                        {
+                            property.SetValue(model, Convert.ChangeType(list.SelectedValue, propertyType), null);
+                        }
+                        else
+                        {
+                            CheckBox box2 = control as CheckBox;
+                            if (box2 != null)
+                            {
+                                property.SetValue(model, Convert.ChangeType(box2.Checked, propertyType), null);
+                            }
+                            else
+                            {
+                                HiddenField field = control as HiddenField;
+                                if (field != null)
+                                {
+                                    property.SetValue(model, Convert.ChangeType(field.Value, propertyType), null);
+                                }
+                                else
+                                {
+                                    Literal literal = control as Literal;
+                                    if (literal != null)
+                                    {
+                                        property.SetValue(model, Convert.ChangeType(literal.Text, propertyType), null);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void FillEntity(object model, DataRow dr)
+        {
+            if (model == null)
+            {
+                throw new NullReferenceException();
+            }
+            Type type = model.GetType();
+            if (dr != null)
+            {
+                foreach (DataColumn column in dr.Table.Columns)
+                {
+                    string columnName = column.ColumnName;
+                    if (dr[columnName] != null)
+                    {
+                        PropertyInfo property = type.GetProperty(columnName);
+                        if (property != null)
+                        {
+                            Type propertyType = type.GetProperty(columnName).PropertyType;
+                            if (dr[columnName] is DBNull)
+                            {
+                                property.SetValue(model, null, null);
+                            }
+                            else
+                            {
+                                property.SetValue(model, Convert.ChangeType(dr[columnName], propertyType), null);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public void FillParams(ParamType paramType)
+        {
+            string current;
+            IEnumerator enumerator;
+            Page handler = HttpContext.Current.Handler as Page;
+            switch (paramType)
+            {
+                case ParamType.Form:
+                    {
+                        ControlCollection controls = handler.Form.Controls;
+                        foreach (Control control in controls)
+                        {
+                            string iD = control.ID;
+                            if ((iD != null) && (iD.IndexOf("S_") > -1))
+                            {
+                                TextBox box = control as TextBox;
+                                Label label = control as Label;
+                                if ((box != null) || (label != null))
+                                {
+                                    this.Params.Add(iD.Substring(2), ((ITextControl)control).Text);
+                                }
+                                else
+                                {
+                                    DropDownList list = control as DropDownList;
+                                    if (list != null)
+                                    {
+                                        this.Params.Add(iD.Substring(2), list.SelectedValue);
+                                    }
+                                    else
+                                    {
+                                        CheckBox box2 = control as CheckBox;
+                                        if (box2 != null)
+                                        {
+                                            this.Params.Add(iD.Substring(2), box2.Checked);
+                                        }
+                                        else
+                                        {
+                                            HiddenField field = control as HiddenField;
+                                            if (field != null)
+                                            {
+                                                this.Params.Add(iD.Substring(2), field.Value);
+                                            }
+                                            else
+                                            {
+                                                Literal literal = control as Literal;
+                                                if (literal != null)
+                                                {
+                                                    this.Params.Add(iD.Substring(2), literal.Text);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                case ParamType.QueryString:
+                    using (enumerator = handler.Request.QueryString.GetEnumerator())
+                    {
+                        while (enumerator.MoveNext())
+                        {
+                            current = (string)enumerator.Current;
+                            this.Params.Add(current, handler.Request.QueryString[current]);
+                        }
+                    }
+                    break;
+
+                case ParamType.Item:
+                    foreach (DictionaryEntry entry in handler.Items)
+                    {
+                        string key = entry.Key.ToString();
+                        this.Params.Add(key, entry.Value);
+                    }
+                    break;
+
+                case ParamType.Session:
+                    using (enumerator = handler.Session.GetEnumerator())
+                    {
+                        while (enumerator.MoveNext())
+                        {
+                            current = (string)enumerator.Current;
+                            this.Params.Add(current, handler.Session[current]);
+                        }
+                    }
+                    break;
+
+                case ParamType.Cookie:
+                    foreach (HttpCookie cookie in handler.Request.Cookies)
+                    {
+                        current = cookie.Name;
+                        if (current.IndexOf("S_") > -1)
+                        {
+                            this.Params.Add(current.Substring(2), cookie.Value);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        public void FillParams(Control controls)
+        {
+            foreach (Control control in controls.Controls)
+            {
+                string iD = control.ID;
+                if ((iD != null) && (iD.IndexOf("S_") > -1))
+                {
+                    TextBox box = control as TextBox;
+                    Label label = control as Label;
+                    if ((box != null) || (label != null))
+                    {
+                        this.Params.Add(iD.Substring(2), ((ITextControl)control).Text);
+                    }
+                    else
+                    {
+                        DropDownList list = control as DropDownList;
+                        if (list != null)
+                        {
+                            this.Params.Add(iD.Substring(2), list.SelectedValue);
+                        }
+                        else
+                        {
+                            HiddenField field = control as HiddenField;
+                            if (field != null)
+                            {
+                                this.Params.Add(iD.Substring(2), field.Value);
+                            }
+                            else
+                            {
+                                CheckBox box2 = control as CheckBox;
+                                if (box2 != null)
+                                {
+                                    this.Params.Add(iD.Substring(2), box2.Checked);
+                                }
+                                else
+                                {
+                                    Literal literal = control as Literal;
+                                    if (literal != null)
+                                    {
+                                        this.Params.Add(iD.Substring(2), literal.Text);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public int GetCount(string tableName, string condition)
+        {
+            string sql = string.Format("select count(1) from [{0}]", tableName);
+            if (!string.IsNullOrEmpty(condition))
+            {
+                sql = sql + string.Format(" where {0}", condition);
+            }
+            try
+            {
+                return Convert.ToInt32(this.T_GetScalar(sql));
+            }
+            catch (SqlException)
+            {
+                return -1;
+            }
+        }
+
+        private SqlDataReader getDataReader(string text, CommandType cmdType)
+        {
+            SqlConnection connection = new SqlConnection(this.ConnectionString);
+            try
+            {
+                connection.Open();
+                SqlCommand cmd = new SqlCommand(text, connection)
+                {
+                    CommandType = cmdType
+                };
+                this.addParamsToCommand(cmd);
+                return cmd.ExecuteReader(CommandBehavior.CloseConnection);
+            }
+            catch (SqlException exception)
+            {
+                //JSHelper.Alert(exception.Message.Replace("\r", "").Replace("\n", ""));
+                connection.Close();
+                return null;
+            }
+        }
+
+        private DataSet getDataSet(string text, CommandType cmdType)
+        {
+            DataSet set2;
+            SqlConnection selectConnection = new SqlConnection(this.ConnectionString);
+            try
+            {
+                selectConnection.Open();
+                SqlDataAdapter adapter = new SqlDataAdapter(text, selectConnection)
+                {
+                    SelectCommand = { CommandType = cmdType }
+                };
+                this.addParamsToCommand(adapter.SelectCommand);
+                DataSet dataSet = new DataSet();
+                adapter.Fill(dataSet);
+                set2 = dataSet;
+            }
+            catch (SqlException exception)
+            {
+                //JSHelper.Alert(exception.Message.Replace("\r", "").Replace("\n", ""));
+                set2 = null;
+            }
+            finally
+            {
+                if (selectConnection != null)
+                {
+                    selectConnection.Dispose();
+                }
+            }
+            return set2;
+        }
+
+        private DataTable getDataTable(string text, CommandType cmdType)
+        {
+            DataTable table2;
+            SqlConnection selectConnection = new SqlConnection(this.ConnectionString);
+            try
+            {
+                selectConnection.Open();
+                SqlDataAdapter adapter = new SqlDataAdapter(text, selectConnection)
+                {
+                    SelectCommand = { CommandType = cmdType }
+                };
+                this.addParamsToCommand(adapter.SelectCommand);
+                DataTable dataTable = new DataTable();
+                adapter.Fill(dataTable);
+                table2 = dataTable;
+            }
+            catch (SqlException exception)
+            {
+                //JSHelper.Alert(exception.Message.Replace("\r", "").Replace("\n", ""));
+                table2 = null;
+            }
+            finally
+            {
+                if (selectConnection != null)
+                {
+                    selectConnection.Dispose();
+                }
+            }
+            return table2;
+        }
+
+        public int GetMaxID(string tableName, string fieldName)
+        {
+            string sql = string.Format("select max({0}) from {1}", fieldName, tableName);
+            return Convert.ToInt32(this.T_GetScalar(sql));
+        }
+
+        public DataTable GetPageData(string tblName, string strGetFields, string fldName, int pageSize, int pageIndex, bool isDesc, string strWhere, out int count)
+        {
+            count = this.GetCount(tblName, strWhere);
+            this.Params.Clear();
+            this.Params.Add("tblName", tblName);
+            this.Params.Add("strGetFields", strGetFields);
+            this.Params.Add("fldName", fldName);
+            this.Params.Add("pageSize", pageSize);
+            this.Params.Add("pageIndex", pageIndex);
+            this.Params.Add("doCount", false);
+            this.Params.Add("orderType", isDesc);
+            this.Params.Add("strWhere", strWhere);
+            return this.SP_GetDataTable("sp_pager");
+        }
+
+        private object getScalar(string text, CommandType cmdType)
+        {
+            object obj2;
+            SqlConnection connection = new SqlConnection(this.ConnectionString);
+            try
+            {
+                connection.Open();
+                SqlCommand cmd = new SqlCommand(text, connection)
+                {
+                    CommandType = cmdType
+                };
+                this.addParamsToCommand(cmd);
+                obj2 = cmd.ExecuteScalar();
+            }
+            catch (SqlException exception)
+            {
+                //JSHelper.Alert(exception.Message.Replace("\r", "").Replace("\n", ""));
+                obj2 = null;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    connection.Dispose();
+                }
+            }
+            return obj2;
+        }
+
+        public static string GetXml(DataTable dt)
+        {
+            string str2;
+            dt.TableName = "table";
+            MemoryStream stream = new MemoryStream();
+            try
+            {
+                dt.WriteXml(stream);
+                string str = Encoding.UTF8.GetString(stream.ToArray());
+                stream.Close();
+                str2 = str;
+            }
+            catch
+            {
+                str2 = string.Empty;
+            }
+            finally
+            {
+                stream.Close();
+                stream.Dispose();
+            }
+            return str2;
+        }
+
+        public bool InsertData(string tableName)
+        {
+            string str = string.Format("insert into [{0}] (", tableName);
+            string str2 = ")values(";
+            foreach (string str3 in this.Params.Keys)
+            {
+                str = str + string.Format("[{0}],", str3);
+                str2 = str2 + "@" + str3 + ",";
+            }
+            str2 = str2.Substring(0, str2.Length - 1);
+            string sql = str.Substring(0, str.Length - 1) + str2 + ")";
+            return this.T_Execute(sql);
+        }
+
+        public DataTable N_GetDataTable(string tableName)
+        {
+            return this.getDataTable(string.Format("select * from [{0}]", tableName), CommandType.Text);
+        }
+
+        public static void ShowInfo(DataTable dataTable)
+        {
+            Page handler = HttpContext.Current.Handler as Page;
+            ShowInfo(dataTable, handler);
+        }
+
+        public static void ShowInfo(object model)
+        {
+            Page handler = HttpContext.Current.Handler as Page;
+            ShowInfo(model, handler);
+        }
+
+        public static void ShowInfo(DataTable dataTable, Control contain)
+        {
+            if (dataTable.Rows.Count > 0)
+            {
+                foreach (DataColumn column in dataTable.Columns)
+                {
+                    Control control = contain.FindControl("S_" + column.ColumnName);
+                    if (control == null)
+                    {
+                        control = contain.FindControl("V_" + column.ColumnName);
+                    }
+                    ITextControl control2 = control as ITextControl;
+                    TextBox box = control as TextBox;
+                    if (box != null)
+                    {
+                        box.Text = dataTable.Rows[0][column].ToString();
+                    }
+                    else
+                    {
+                        Label label = control as Label;
+                        if (label != null)
+                        {
+                            label.Text = dataTable.Rows[0][column].ToString();
+                        }
+                        else
+                        {
+                            DropDownList list = control as DropDownList;
+                            if (list != null)
+                            {
+                                foreach (ListItem item in list.Items)
+                                {
+                                    if (item.Value == dataTable.Rows[0][column].ToString())
+                                    {
+                                        item.Selected = true;
+                                    }
+                                }
+                            }
+                            HiddenField field = control as HiddenField;
+                            if (field != null)
+                            {
+                                field.Value = dataTable.Rows[0][column].ToString();
+                            }
+                            else
+                            {
+                                CheckBox box2 = control as CheckBox;
+                                if (box2 != null)
+                                {
+                                    box2.Checked = dataTable.Rows[0][column].Equals(true);
+                                }
+                                else
+                                {
+                                    Literal literal = control as Literal;
+                                    if (literal != null)
+                                    {
+                                        literal.Text = dataTable.Rows[0][column].ToString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void ShowInfo(object model, Control contain)
+        {
+            if (model == null)
+            {
+                throw new NullReferenceException();
+            }
+            Type type = model.GetType();
+            foreach (PropertyInfo info in type.GetProperties())
+            {
+                Control control = contain.FindControl("S_" + info.Name);
+                if (control == null)
+                {
+                    control = contain.FindControl("V_" + info.Name);
+                }
+                if (control != null)
+                {
+                    object obj2;
+                    TextBox box = control as TextBox;
+                    if (box != null)
+                    {
+                        obj2 = info.GetValue(model, null);
+                        box.Text = (obj2 == null) ? string.Empty : obj2.ToString();
+                    }
+                    else
+                    {
+                        Literal literal = control as Literal;
+                        if (literal != null)
+                        {
+                            obj2 = info.GetValue(model, null);
+                            literal.Text = (obj2 == null) ? string.Empty : obj2.ToString();
+                        }
+                        else
+                        {
+                            Label label = control as Label;
+                            if (label != null)
+                            {
+                                obj2 = info.GetValue(model, null);
+                                label.Text = (obj2 == null) ? string.Empty : obj2.ToString();
+                            }
+                            else
+                            {
+                                DropDownList list = control as DropDownList;
+                                if (list != null)
+                                {
+                                    obj2 = info.GetValue(model, null);
+                                    if (obj2 == null)
+                                    {
+                                        continue;
+                                    }
+                                    foreach (ListItem item in list.Items)
+                                    {
+                                        if (item.Value == obj2.ToString())
+                                        {
+                                            item.Selected = true;
+                                        }
+                                    }
+                                }
+                                HiddenField field = control as HiddenField;
+                                if (field != null)
+                                {
+                                    obj2 = info.GetValue(model, null);
+                                    field.Value = (obj2 == null) ? string.Empty : obj2.ToString();
+                                }
+                                else
+                                {
+                                    CheckBox box2 = control as CheckBox;
+                                    if (box2 != null)
+                                    {
+                                        obj2 = info.GetValue(model, null);
+                                        box2.Checked = (obj2 != null) && ((obj2.Equals(true) || obj2.Equals("1")) || obj2.Equals(1));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public bool SP_Execute(string storedProcedureName)
+        {
+            return this.execute(storedProcedureName, CommandType.StoredProcedure);
+        }
+
+        public SqlDataReader SP_GetDataReader(string storedProcedureName)
+        {
+            return this.getDataReader(storedProcedureName, CommandType.StoredProcedure);
+        }
+
+        public DataSet SP_GetDataSet(string storedProcedureName)
+        {
+            return this.getDataSet(storedProcedureName, CommandType.StoredProcedure);
+        }
+
+        public DataTable SP_GetDataTable(string storedProcedureName)
+        {
+            return this.getDataTable(storedProcedureName, CommandType.StoredProcedure);
+        }
+
+        public object SP_GetScalar(string storedProcedureName)
+        {
+            return this.getScalar(storedProcedureName, CommandType.StoredProcedure);
+        }
+
+        public bool T_Execute(string sql)
+        {
+            return this.execute(sql, CommandType.Text);
+        }
+
+        public SqlDataReader T_GetDataReader(string sql)
+        {
+            return this.getDataReader(sql, CommandType.Text);
+        }
+
+        public DataSet T_GetDataSet(string sql)
+        {
+            return this.getDataSet(sql, CommandType.Text);
+        }
+
+        public DataTable T_GetDataTable(string sql)
+        {
+            return this.getDataTable(sql, CommandType.Text);
+        }
+
+        public object T_GetScalar(string sql)
+        {
+            return this.getScalar(sql, CommandType.Text);
+        }
+
+        public bool UpdateData(string tableName)
+        {
+            return this.UpdateData(tableName, "id");
+        }
+
+        public bool UpdateData(string tableName, string PKField)
+        {
+            string str = string.Format("update [{0}] set ", tableName);
+            string str2 = string.Empty;
+            foreach (string str3 in this.Params.Keys)
+            {
+                if (str3.ToUpper() != PKField.ToUpper())
+                {
+                    str = str + string.Format("[{0}]=@{0},", str3);
+                }
+            }
+            str2 = string.Format(" where [{0}]= @{0}", PKField);
+            string sql = str.Substring(0, str.Length - 1) + str2;
+            return this.T_Execute(sql);
+        }
+
+        // Properties
+        public string ConnectionString { get; set; }
+    }
+}
+ 
+

@@ -1,0 +1,1 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="Delete_VaccineInBatchOP.aspx.cs" Inherits="Vaccine_StockManagementM_VaccineIn_Delete_VaccineInBatchOP" %>

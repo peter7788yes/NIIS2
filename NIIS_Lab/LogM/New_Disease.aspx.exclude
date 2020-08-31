@@ -1,0 +1,77 @@
+﻿<%@ Page Language="C#"  AutoEventWireup="true" CodeFile="New_Disease.aspx.cs" Inherits="New_Disease" MasterPageFile="~/MasterPage/MasterPage.master" %>
+<%@ Import Namespace="System.Web.Optimization" %>
+<asp:Content ID="headJsCT" ContentPlaceHolderID="headJsCP" Runat="Server">
+      <%=HeadScript %>
+</asp:Content> 
+<asp:Content ID="cssCT" ContentPlaceHolderID="cssCP" Runat="Server">
+      <%:Styles.Render("~/bundles/Disease_CSS")%>
+</asp:Content> 
+<asp:Content ID="bodyClassCT" ContentPlaceHolderID="bodyClassCP" runat="Server"><%:BodyClass %></asp:Content>
+<asp:Content ID="cpCT" ContentPlaceHolderID="ctCP" Runat="Server">
+<section class="Content2">
+<h2>罕見字測試</h2>   
+    <script type="text/javascript" src="http://10.10.4.150/webime/ime/arwin_loader.js"></script>
+<script>
+var arime=false;
+function ImeOnOff()
+{
+	if(arime)
+	{
+		arimeapi.enableIme(false);
+		arime=false;
+	}
+	else
+	{
+		arimeapi.enableIme(true);
+		arime=true;
+	}
+}
+function ImeOnOff_OnClick(isTurnOn)
+{
+    // arimeapi.enableIme(true); 打開 IME
+    // arimeapi.enableIme(false); 關閉 IME
+    arimeapi.enableIme(isTurnOn);
+}
+function ImeSwitch_OnClick(id)
+{// 切換輸入法
+    arimeapi.switchIme(id);
+}
+</script>
+    <div id="DiseaseApp" ng-controller="DiseaseController">
+         <form name="form1" id="form1" autocomplete="off">
+		 
+            <div class="formBtn formBtnleft">
+                <input-submit name=send value="儲存" ng-click="savedata(nameC, nameE, NewDisOption.value, sequence,'<%=getAccount %>')"></input-submit>
+                <input class="btn" type="submit" name="send" ng-click="closeWin()" value="取消"/><br/>
+            </div>
+            <div class="formTb">
+                <table>
+                    <tr>    
+                        <th scope="row"><span class="must">*</span>請輸入中文: </th><td><input ng-model="nameC" type="text" value="" id="nameC" class="text02 arWebIME"  /><a name="webime_sp"  href="#" title="" onclick="javascript:ImeOnOff();" class="tiny_btn gray_btn smaller">罕</a></td>
+                        
+                    </tr> 
+					<!--
+                    <tr>     
+                        <th scope="row">英文名稱: </th><td><input ng-model="nameE" type="text" value="" class=text02 /></td>
+                    <tr> 
+                    </tr> 
+                        <th scope="row">狀態: </th><td><select ng-model="NewDisOption" ng-options="m.item for m in SaMoOption"></td></select>
+                    </tr> 
+                    <tr> 
+                        <th scope="row">順序: </th><td><input ng-model="sequence" type="text" value="" class=text02 /></td>
+                    </tr> 
+					-->
+                </table>
+            </div>
+         </form>
+
+    </div>
+</section>
+</asp:Content>
+   
+<asp:Content ID="jsCT" ContentPlaceHolderID="jsCP" Runat="Server">
+     <%:Scripts.Render("~/bundles/Disease_JS")%>
+</asp:Content> 
+    
+
+

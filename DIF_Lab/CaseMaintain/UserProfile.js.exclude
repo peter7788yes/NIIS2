@@ -1,0 +1,59 @@
+﻿$(function () {
+ 
+
+    $(document).on("click", "#ModifyLogTab", function (e) {
+        BindLogData();
+        e.preventDefault();
+        return false;
+    });
+
+     
+});
+
+ 
+
+function BindLogData() {
+
+         angular.module("MyApp", ["PageM", "TableM", "FilterM"])
+         .controller("MyController", ["$scope", "PageProvider", "TableProvider", function ($scope, PageProvider, TableProvider, hotkeys) {
+
+             $scope.PM = PageProvider;
+             $scope.TM = {};
+             $scope.VM = {}; 
+             $scope.changePage = function (pageIndex) {
+                 $("#tmBlock").show();
+                 var pgData = $scope.PM.genPageData(pageIndex);
+                 var postData = {};
+                  
+
+                 postData = $scope.PM.filterPageData(pgData, postData);
+                 $scope.PM.changePage("/CaseMaintain/UserProfileModifyListOP.aspx", postData, function (data) {
+                     $scope.TM.data = data.message;
+                     $scope.$apply(function () { });
+                 });
+             };
+
+             $scope.changePage(1);
+              
+
+
+         } ]);
+
+          
+         }
+         
+
+//開起子視窗=================================================================================================================================
+//function PopWin(targetURL) {
+//    newWINwidth = 600;
+//    newWINheight = 800;
+//    window.open(targetURL, 'tarWin', "width=" + newWINwidth + ",height=" + newWINheight + ",toolbar=1,resizable=0,scrollbars=yes,status=yes");
+//}
+//function PopWin(targetURL, newWINwidth, newWINheight) {
+//    window.open(targetURL, 'tarWin', "width=" + newWINwidth + ",height=" + newWINheight + ",toolbar=1,resizable=0,scrollbars=yes,status=yes");
+//}
+
+//function PopWin(targetURL, newWINwidth, newWINheight, targetID) {
+//    window.open(targetURL, targetID, "width=" + newWINwidth + ",height=" + newWINheight + ",toolbar=1,resizable=0,scrollbars=yes,status=yes");
+//}
+//開起子視窗(END)=============================================================================================================================

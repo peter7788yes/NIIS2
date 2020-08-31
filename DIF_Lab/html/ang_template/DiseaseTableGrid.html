@@ -1,0 +1,22 @@
+﻿<!--<h2>TableGrid1.htm2</h2>
+{{VMD.tbData.length}}
+{{1435558988140 | LongTaiwanDate:true}}<br/>-->
+<table  border="1">
+        <tr>
+            <th scope="col" width="10%">序號</th>
+            <th scope="col" width="40%">疾病中文名稱</th>
+            <th scope="col" width="40%">疾病英文名稱</th>
+            <th scope="col">狀態</th>
+        </tr>
+        <!--<tr ng-repeat="record in VMD.tbData track by $index" data-ng-init="tbHeadArray=VMD.tbHeadArray;tbFieldArray=VMD.tbFieldArray;isHtml=VMD.isHtml;IsDate=IsDate">
+            <td ng-repeat="field in tbHeadArray" ng-if="isHtml==true"  ng-bind-html="record[field]"></td>
+            <td ng-repeat="field in tbHeadArray" ng-if="isHtml==false"  ng-bind="record[field] | LongTaiwanDate:true"></td>
+            <td ng-repeat="field in tbFieldArray" ng-bind-html="IsDate(record[field]) ?(record[field] | LongTaiwanDate:true) : record[field]"></td>
+        </tr>-->
+        <tr ng-repeat="record in VMD.tbData">
+            <td class="aCenter">{{record.c1}}</td>
+            <td class="aCenter"><a href="#" ng-click="VMD.Modify_openWin(record.c2,record.c3,record.c4,record.c5,record.c6)">{{record.c3}}</a></td>
+            <td class="aCenter">{{record.c4}}</td>
+            <td class="aCenter">{{record.c5}}</td>
+        </tr>
+</table>

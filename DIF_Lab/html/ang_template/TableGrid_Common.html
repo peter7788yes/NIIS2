@@ -1,0 +1,15 @@
+﻿<div class="listTb">
+            <table>
+                <tr>
+                    <tr>
+                        <th ng-repeat="item in VMD.tbHeadArray  track by $index"
+                            ng-style="$index == 0  ? {'width':'10%'} : [1,2].indexOf($index)>=0 ? {'width':'15%'} :{}"
+                            ng-bind="item"></th>
+                    </tr>
+                </tr>
+                <tr ng-repeat="record in VMD.tbData track by $index" data-ng-init="tbHeadArray=VMD.tbHeadArray;tbFieldArray=VMD.tbFieldArray;isHtml=VMD.isHtml;IsDate=IsDate">
+                     <td ng-repeat="field in tbHeadArray"
+                         ng-bind="IsDate(record[field]) ?(record[field] | date:'yyyyMMdd') : record[field]"></td>
+                </tr>
+            </table>
+</div>

@@ -1,0 +1,18 @@
+@charset "utf-8";
+/* CSS Document */
+.list01{ margin:0 0 0 10px}
+
+.list01 ul{ margin:0; padding:0}
+.list01 ul li{list-style-type:none; margin:0 0 10px 0; background-image:url(../images/icon02.png); background-repeat:no-repeat; background-position:0 5px; padding:0 0 0 10px}
+.list01 ul li span{ margin:0 5px 0 0}
+/*----------*/
+.remark{margin:0 0 10px 10px}
+/*-*/
+
+.list02{ float:right }
+.list02 ul{ margin:0 10px; padding:0;}
+.list02 ul li{ list-style-type:none; margin:0 0 10px 0; padding:5px;}
+.list02 ul li span{
+	display:inline-block; 
+	width:100px; text-align:right; margin:0 8px 0 0}
+.list02 ul li em{border-bottom:1px solid #666;width:150px;display:inline-block;text-align:center; }

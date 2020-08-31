@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+
+public partial class SearchCheck_ExportFile : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        int AuditID = 0;
+        int.TryParse(Request["a"], out AuditID);
+
+        DataTable dt = (DataTable)DBUtil.DBOp("ConnDB", "SELECT  convert(varchar,year([AuditYearMonth]))+ '-' + convert(varchar,month([AuditYearMonth])) YearMonth , isnull([AuditResult],0) AuditResult ,sk.KindName as SearchKindName  FROM [dbo].[C_CaseSearchAudit]  inner join  (select 1 as ID ,'批次資料查詢' as KindName  union all select 2,'單筆資料查詢'    union all select 3,'批次資料勾稽'    union all select 4,'親子資料勾稽' ) as sk   on sk.ID = C_CaseSearchAudit.SearchKind where C_CaseSearchAudit.[id]={0}", new string[] { AuditID.ToString() }, NSDBUtil.CmdOpType.ExecuteReaderReturnDataTable);
+
+        if (dt.Rows.Count > 0)
+        {
+            ltYearMonth.Text = dt.Rows[0]["YearMonth"].ToString();
+            ltSearchKindName.Text = dt.Rows[0]["SearchKindName"].ToString();
+        }
+
+    }
+}

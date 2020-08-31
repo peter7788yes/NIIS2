@@ -1,0 +1,121 @@
+@charset "utf-8";
+/* CSS Document */
+header, footer, nav, aside, section, article, figure, figcaption { display: block; }
+body { font-family: "微軟正黑體", Arial, Helvetica, sans-serif; font-size: 0.938em/*15px*/; margin: 0; padding: 0 }
+.bodybg { /*background-image: url(../images/content_bg.jpg); background-repeat: no-repeat; background-position: 80% -10px;*/ }
+input { font-family: "微軟正黑體", Arial, Helvetica, sans-serif; font-size: 0.938em; }
+
+.btn { position: relative; background-color: #707070; background-image: url(../images/btn_bg01.gif); background-repeat: repeat-x; background-position: 0 0; border: 1px solid #a6a6a7; color: #fff; padding: 0px 20px; margin: 0; height: 26px; cursor: pointer; vertical-align: middle; text-align: center; border-radius:5px }
+.btn:hover { background-image: url(../images/btn_bg01_2.gif); border: 1px solid #646468; background-color: #2c2c2c; color: #fff }
+.wordred { color: #C00 }
+.wordblue{ color: #09C }
+img { vertical-align: middle }
+a { color: #CC6666; text-decoration: underline }
+a:hover { color: #C00; text-decoration: underline }
+.hidden { display: none }
+em { font-style: normal; }
+.must { color: #FF0000; margin: 0px; font-size: 150%; font-weight: bold; vertical-align: bottom; line-height: 50%; padding: 0 5px 0 0 }
+hr {
+  margin: 15px 10px;
+  border: 0;
+  border-top: 2px dotted #ccc;
+}
+/*---------------------------------top*/
+.top { background-color: #eea09e; background-image: url(../images/topbg.gif); background-repeat: repeat-x; background-position: 0 0; position: relative; }
+.top .logo { position: absolute; left: 0; top: 13px; }
+.top .user { position: absolute; right: 90px; top: 20px; color: #fff; font-size: 0.875em }
+.top .user .name { display: block; margin: 0 0 5px 0 }
+.top .logout { position: absolute; top: 20px; right: 10px; }
+.top .logout a { display: block; color: #666; background-color: #fff; border: 1px solid #fff; box-shadow: inset 2px 2px 3px #ccc; border-radius: 20px; padding: 5px 10px; width: 40px; text-align: center; text-decoration: none; }
+.top .logout a:hover { background-color: #FFC; }
+.toplink { position: absolute; left: 300px; top: 23px; }
+.toplink ul { margin: 0; padding: 0 }
+.toplink ul li { list-style-type: none; float: left; margin: 0 5px 0 0 }
+.toplink ul li a { display: block; color: #666; background-color: #fff; border: 1px solid #fff; box-shadow: inset 2px 2px 3px #ccc; border-radius: 20px; padding: 5px 15px; text-align: center; text-decoration: none; }
+.toplink ul li a:hover { background-color: #FFC }
+/*---------------------------------left tree*/
+.leftblock { color: #333; }
+.leftblock a { color: #333; text-decoration: none }
+.leftblock a:hover { color: #c00; text-decoration: none }
+.tree { margin: 10px 10px 10px 10px; }
+.tree ul { margin: 0; padding: 0 }
+.tree ul li { list-style-type: none; margin: 0 0 13px 0; }
+.tree ul li a { display: block; }
+.tree ul>li.add { background-image: url(../images/tree_icon01.gif); background-repeat: no-repeat; background-position: 0 2px; padding: 0 0 0 25px }
+.tree ul>li.less { background-image: url(../images/tree_icon02.gif); background-repeat: no-repeat; background-position: 0 2px; padding: 0 0 0 25px }
+/*-2*/
+.tree ul li>ul { margin: 0 0 0 -25px; padding: 15px 0 0 10px }
+.tree ul li ul>li { background-image: url(../images/tree_icon07.gif); background-repeat: no-repeat; background-position: 0 5px; padding: 0 0px 0 30px }
+.tree ul li ul li a { padding: 0 23px 0 0 }
+.tree ul li ul>li.add { background-image: url(../images/tree_icon03.gif); background-repeat: no-repeat; background-position: 0 5px; padding: 0 0 0 30px }
+.tree ul li ul>li.less { background-image: url(../images/tree_icon04.gif); background-repeat: no-repeat; background-position: 0 5px; padding: 0 0 0 30px }
+.tree ul li ul>li:last-child { background-image: url(../images/tree_icon03_4.gif); background-repeat: no-repeat; background-position: 0 0px; padding: 0 0 0 33px; margin: 0 0 0 -4px }
+.tree ul li ul>li:last-child.add { background-image: url(../images/tree_icon03_2.gif); background-repeat: no-repeat; background-position: 0 5px; padding: 0 0 0 33px; margin: 0 0 0 -3px }
+.tree ul li ul>li:last-child.less { background-image: url(../images/tree_icon03_3.gif); background-repeat: no-repeat; background-position: 0 5px; padding: 0 0 0 33px; margin: 0 0 0 -3px }
+.tree ul li ul>li:last-child.less:hover{background-image: url(../images/tree_icon03_3_2.gif);}
+/*-3*/
+.tree ul li ul li>ul { margin: 0 0 0 -18px; padding: 13px 0 0 10px }
+.tree ul li ul li ul li { background-image: url(../images/tree_icon05.gif); background-repeat: no-repeat; background-position: 0 4px; padding: 0px 0 0 32px; }
+.tree ul li ul li ul li:last-child { background-image: url(../images/tree_icon06_2.gif); background-repeat: no-repeat; background-position: 0 3px; padding: 1px 0 0 34px; margin: 0 0 0 -2px }
+/*-*/
+
+.tree ul li ul li ul li:last-child:hover { background-image: url(../images/tree_icon06_2.gif); }
+.tree ul li ul li.hereblock ul li:last-child { background-image: url(../images/tree_icon06.gif) }
+/*-*/
+.tree ul ul.line { background-image: url(../images/tree_line01.gif); background-repeat: repeat-y; background-position: 8px 0px; }
+.tree ul li ul li.hereblock { background-color: #f7cecd }
+.tree ul li ul li:hover { background-color: #f7cecd }
+.tree ul li ul li:hover ul li:last-child { background-image: url(../images/tree_icon06.gif) }
+.tree ul li a.here { background-color: #efa09c; background-image: url(../images/tree_here.gif); background-repeat: no-repeat; background-position: right center; }
+.tree ul li a:hover.here { color: #fff }
+/*---------------------------------Content*/
+.Content { margin: 10px 10px; padding: 0 ; position:relative;}
+.Content2 { margin: 0 10px 0 0; padding: 0; width: 600px; border: 1px solid #ccc ; position:relative;}
+.Content3 { margin: 0 10px 0 0; padding: 0; width: 900px; border: 1px solid #ccc; position:relative; }
+.Content2 h2, .Content3 h2 { font-size: 1.188em; font-weight: normal; background-color: #eea19e; color: #fff; padding: 10px 10px 7px; margin: 0 0 0px 0 }
+.path { color: #333; margin: 0px; padding:3px 10px; }
+.Content2 .path, .Content3 .path { color: #333; margin: 0px; padding: 3px 10px; background-color: #F2F2F2 }
+.path a { text-decoration: none; color: #000 }
+.path a:hover {  color:#C00 }
+.path a:after { content: "  》"; color: #333; }
+/*------------------------------------*/
+.formBtn { text-align: center; margin: 10px }
+.formBtnleft { text-align: left; margin: 10px }
+.formBtnright { text-align:right; margin: 10px }
+.formBtn input { margin: 0 5px 0 0 }
+.formBtn .btn { background-color: #922828; background-image: url(../images/btn_bg02.gif); border: 1px solid #bf6d6d; color: #fff; }
+.formBtn .btn:hover { background-image: url(../images/btn_bg02_2.gif); border: 1px solid #a15b5b; background-color: #691e1e }
+/*-----------------------------------function*/
+.function{ margin:0 10px 10px; padding:0; background-color:#fff}
+.function ul{ margin:0; padding:0}
+.function ul li{ list-style-type:none; float:left; margin:0 20px 0 0}
+.function ul li a{ text-decoration:none; color:#333;} 
+.function ul li a.print{ background-image:url(../images/icon_print.png); background-repeat:no-repeat; background-position:0 1px; padding:0 0 0 23px ; display:block;} 
+.function ul li a.download{ background-image:url(../images/icon_download.png); background-repeat:no-repeat; background-position:0 0px; padding:0 0 0 21px ; display:block;} 
+.function ul li a.export{background-image:url(../images/icon_export.png); background-repeat:no-repeat; background-position:0 0px; padding:0 0 0 21px ; display:block;}
+.function ul li a:hover{ text-decoration:underline; color:#C00}
+/*------------------------------------buttonfloat*/
+
+.button_floatright{ float:right; margin:0 10px 5px 0 }
+.button_floatleft{ float:left; margin:0 0 5px 10px}
+/*----------------------------title-*/
+.title{ font-size:1.125em; margin:0 0 5px 10px}
+/*------------------------------explain說明*/
+.explain{ margin:0 10px 10px;  overflow:hidden; width:98%;}
+.explain span{float:left}
+.explain span img{ margin:0 5px 0 0 }
+.explain ul{ margin:0; padding:0;}
+.explain ul li{  list-style-type:none;float:left; margin:0 5px 0 0; border:1px solid #ccc; padding:2px 5px}
+.explain ul li.orangebg { background-color: #FFCC99 }
+.explain ul li.bluebg { background-color: #CCFBFD }
+.explain ul li.pinkbg{background-color: #FFE1E1}
+.explain ul li.yellowbg{background-color: #FFFFD9}
+.explain ul li.redbg{background-color: #F9C}
+/*--------------------------------close關閉-*/
+.close{ position:absolute; top:7px; right:10px}
+.close .btn{ background-color: #C68A8A; border: 1px solid #ebd6d6; color: #fff; background-image:none }
+/*-----------------------------Choose選擇*/
+.choose{ margin:5px 10px}
+.choose span{ margin:0 5px 0 0}
+.choose select { margin: 0 5px 5px 0; border: 1px solid #e3e1e1; padding: 3px 0px 2px; }
+.choose span.yellowcolor{ background-color: #FFFFD9; border:1px solid #ccc; padding:2px 5px 4px; }

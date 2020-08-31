@@ -1,0 +1,50 @@
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+/// <summary>
+/// RegisterData 的摘要描述
+/// </summary>
+public class LocationSettingVM
+{
+    [JsonProperty(PropertyName = "S")]
+    public int SID { get; set; }
+
+    [JsonProperty(PropertyName = "I")]
+    public int ID { get; set; }
+
+    [JsonProperty(PropertyName = "AC")]
+    public string AgencyCode { get; set; }
+
+    [JsonProperty(PropertyName = "AN")]
+    public string AgencyName { get; set; }
+
+    [JsonIgnore]
+    public int AgencyState { get; set; }
+
+    [JsonProperty(PropertyName = "AS")]
+    public string AgencyStateSting
+    {
+        get
+        {
+            string rtn = "";
+            switch (AgencyState)
+            {
+                case 1:
+                    rtn = "無約";
+                    break;
+                case 2:
+                    rtn = "合約中";
+                    break;
+                case 3:
+                    rtn = "解約";
+                    break;
+            }
+
+            return rtn;
+        }
+
+    }
+}

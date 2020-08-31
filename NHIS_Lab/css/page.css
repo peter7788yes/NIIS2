@@ -1,0 +1,29 @@
+@charset "utf-8";
+/* CSS Document */
+/*--------------------------------------------------------- page 分頁 */
+.page { clear: both; margin: 5px 0 5px 10px; padding: 0; overflow: hidden; font-size: 1.06em; line-height: 100%; *line-height:120%;  text-align:center }
+.page em { font-weight: bold; font-style: normal; letter-spacing: 0; margin: 0 3px; color: #C60; }
+.page select { font-weight: bold; font-family: Verdana, Geneva, sans-serif; vertical-align: middle; margin: 0 3px 5px; }
+.page option { font-weight: bold; font-family: Verdana, Geneva, sans-serif; }
+/*----------------------------- 1 2 3 4 5 */
+.page ul { list-style: none; overflow: hidden; margin: 3px 8px 0 0; padding: 0; display: inline-block; line-height: 100%; vertical-align: middle; text-align:center; }
+.page ul li { margin: 0 2px; padding: 0; float: left; }
+.page ul li a { display: inline-block; padding: 2px 6px 2px; *padding:2px 6px;
+border: 1px solid #bbb; background: #fff; color: #666; text-decoration: none; border-radius: 4px; position: relative; behavior: url(js/PIE.htc); }
+.page ul li a:hover { border: 1px solid #d78959; color: #d76a59; text-decoration: none; }
+.page ul li.here a { color: #fff; font-weight: bold;  background: #d78959; cursor: default; }
+.page ul li.here a:hover { _color: #fff; }
+.page ul li.prev { margin-right: 8px; }
+.page ul li.next { margin-left: 8px; }
+.page ul li.first a, .page ul li.last a, .page ul li.prev a, .page ul li.prevTen a, .page ul li.next a, .page ul li.nextTen a { background: url(../images/pageBtn.png) no-repeat 0 0; padding: 0; border: none; height: 23px; width: 23px; }
+.page ul li.prev a { background-position: 0 0; }
+.page ul li.next a { background-position: -30px 0; }
+.page ul li.prevTen a { background-position: 0 -30px; }
+.page ul li.nextTen a { background-position: -30px -30px; }
+.page ul li.first a { background-position: 0 -60px; }
+.page ul li.last a { background-position: -30px -60px; }
+.page ul li.first a:hover, .page ul li.last a:hover, .page ul li.prev a:hover, .page ul li.prevTen a:hover, .page ul li.next a:hover, .page ul li.nextTen a:hover { border: none; }
+/*--------------------條件查詢 */
+.condition { float: right; margin: 8px 0 5px; }
+.condition a { display: inline-block; padding: 4px 4px 3px 22px; background: url(../images/search_icon.png) no-repeat 4px 3px; line-height: 110%; border: 1px solid #fff !important; border-radius: 4px; text-decoration: none; color: #666; }
+.condition a:hover { border-color: #bbb!important; box-shadow: rgba(0, 0, 0, 0.35) 0 0 4px; color: #333; }

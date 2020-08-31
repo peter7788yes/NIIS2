@@ -1,0 +1,2373 @@
+// ===========================================================================
+// PC/SC API 部分程式引用小紀的天空 感謝分享
+// http://blog.blueshop.com.tw/timothychi/archive/2008/03/27/54595.aspx
+// 本程式藍色小舖下載地址
+// http://www.blueshop.com.tw/download/show.asp?pgmcde=PGM20090224185044OAP
+// ===========================================================================
+
+#define _CHV1_
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace SCardAPI
+{
+    public unsafe partial class SmartSpy
+    {
+        #region === 引用 winscard.dll
+        //引用 PC/SC(Personal Computer/Smart Card) API WinScard.dll
+        [DllImport("winscard.dll", EntryPoint = "SCardEstablishContext")]
+        public static extern int SCardEstablishContext(
+            uint dwScope,
+            IntPtr pvReserved1,
+            IntPtr pvReserved2,
+            ref uint phContext);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardReleaseContext")]
+        public static extern int SCardReleaseContext(
+            uint hContext);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardConnectW", CharSet = CharSet.Unicode)]
+        public static extern int SCardConnect(
+            uint hContext,
+            [MarshalAs(UnmanagedType.LPWStr)] string szReader,
+            uint dwShareMode,
+            uint dwPreferredProtocols,
+            ref uint phCard,
+            ref uint pdwActiveProtocol);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardDisconnect")]
+        public static extern int SCardDisconnect(
+            uint hCard,
+            uint dwDisposition);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardReconnect")]
+        public static extern int SCardReconnect(
+            uint hCard,
+            uint dwShareMode,
+            uint dwPreferredProtocols,
+            uint dwInitialization,
+            ref uint pdwActiveProtocol);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardListCardsW", CharSet = CharSet.Unicode)]
+        public static extern int SCardListCards(
+            uint hContext,
+            byte[] pbAtr,
+            GUID[] rgquidInterfaces,
+            uint cguidInterfaceCount,
+            [Out] byte[] mszCards,
+            ref uint pcchCards);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardListReadersW", CharSet = CharSet.Unicode)]
+        public static extern int SCardListReaders(
+            uint hContext,
+            byte[] mszGroups,
+            byte[] mszReaders,
+            ref uint pcchReaders);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardListReaderGroupsW", CharSet = CharSet.Unicode)]
+        public static extern int SCardListReaderGroups(
+            uint hContext,
+            [Out] byte[] mszGroups,
+            ref uint pcchGroups);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardStatusW", CharSet = CharSet.Unicode)]
+        public static extern int SCardStatus(
+            uint hCard,
+            [MarshalAs(UnmanagedType.LPWStr)] string szReaderName,
+            ref uint pcchReaderLen,
+            ref uint pdwState,
+            ref uint pdwProtocol,
+            byte[] pbAtr,
+            ref uint pcbAtrLen);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardGetStatusChangeW", CharSet = CharSet.Unicode)]
+        public static extern int SCardGetStatusChange(
+            uint hContext,
+            uint dwTimeout,
+            [In, Out] SCARD_READERSTATE[] rgReaderStates,
+            uint cReaders);
+
+        [DllImport("winscard.dll", EntryPoint = "SCardTransmit")]
+        public static extern int SCardTransmit(
+            uint hCard,
+            ref SCARD_IO_REQUEST pioSendPci,
+            byte[] pbSendBuffer,
+            uint cbSendLength,
+            ref SCARD_IO_REQUEST pioRecvPci,
+            [Out] byte[] pbRecvBuffer,
+            ref uint pcbRecvLength);
+        #endregion
+
+        #region === 引用 GCALIB 中華電信憑證API 此為解析自然人憑證之必要條件
+        [DllImport("GPKICardFunction.dll")]
+        internal static extern int GetCertificateFromGPKICard(
+            int iCertID,
+            byte* ppucCertificate,
+            int* piCertificateLength,
+            string sReaderName);
+
+        [DllImport("GPKICardFunction.dll")]
+        internal static extern int GPKICardInitialize(
+            string sReaderName);
+
+        [DllImport("GPKICardFunction.dll")]
+        internal static extern int GPKICardClose();
+
+        [DllImport("GPKICardFunction.dll")]
+        internal static extern int GPKICardVerifyUserPIN(
+            string pinCode);
+
+        [DllImport("GPKICardFunction.dll")]
+        internal static extern int GPKICardReadCardID(
+            string smartCardID);
+
+        [DllImport("GPKICardFunction.dll")]
+        internal static extern int GPKICardChangePIN(
+            string pCurrentPIN,
+            string pNewPIN);
+
+        [DllImport("CHTHiSECUREParsingva.dll")]
+        internal static extern int DecodeCertificate(
+            byte* pCertificate,
+            int iCertificateLength,
+            CertBasicStruct* SCertificate);
+
+        [DllImport("CHTHiSECUREParsingva.dll")]
+        internal static extern int GetCertInfo(
+            CertBasicStruct* SCertificate,
+            CertInfoStruct* SCertInfo);
+
+        [DllImport("CHTHiSECUREParsingva.dll")]
+        internal static extern int GetExtension(
+            byte* pExtension,
+            int iExtensionLen,
+            uint[] pfOID,
+            int iOIDLen,
+            bool* pbCritical,
+            byte* ppSubExtension,
+            int* piSubExtensionLen);
+
+        [DllImport("CHTHiSECUREParsingva.dll")]
+        internal static extern int GetSubjectDirectoryAttributes(
+            byte* pExtension,
+            int iExtensionLength,
+            uint[] irgOID,
+            int iOIDLength,
+            byte* ppAttribute,
+            int* piAttributeLength);
+
+        [DllImport("CHTHiSECUREParsingva.dll")]
+        internal static extern int ExtractOIDFromDerCode(
+            byte* pDerCodeData,
+            int iDerCodeDataLength,
+            string sOutOID);
+        #endregion
+
+        #region ---- 宣告常數 ----
+        public const string PNP_READER_NAME = @"\\?PnP?\Notification";
+        public const int MAX_ATR_LEN = 36;
+        public const int MAXIMUM_SMARTCARD_READERS = 16;
+        public const uint INFINITE = 0xFFFFFFFF; //-1 infinite timeout
+        public const uint SCARD_AUTOALLOCATE = 0xFFFFFFFF; //-1
+        public const uint SCARD_ATTR_ATR_STRING = 0x00090303;
+
+        #region HRESULTs/ERRORs
+        public const uint SCARD_S_SUCCESS = 0x00000000;
+        public const uint SCARD_E_CANCELLED = 0x80100002;
+        public const uint SCARD_E_NO_READERS_AVAILABLE = 0x8010002E;
+        public const uint ERROR_INVALID_PARAMETER = 0x80070057;
+        #endregion
+
+        #region SCARD_PROTOCOL
+        public const uint SCARD_PROTOCOL_UNDEFINED = 0;
+        public const uint SCARD_PROTOCOL_T0 = 1;
+        public const uint SCARD_PROTOCOL_T1 = 2;
+        public const uint SCARD_PROTOCOL_Tx = (SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1);
+        public const uint SCARD_PROTOCOL_RAW = 0x10000;
+        public const uint SCARD_PROTOCOL_DEFAULT = 0x80000000;
+        #endregion
+
+        #region SCARD_SCOPE
+        /// <summary>
+        /// The context is a user context, and any database operations are performed within the
+        /// domain of the user.
+        /// </summary>
+        public const uint SCARD_SCOPE_USER = 0;
+        /// <summary>
+        /// The context is that of the current terminal, and any database operations are performed
+        /// within the domain of that terminal. (The calling application must have appropriate
+        /// access permissions for any database actions.)
+        /// </summary>
+        public const uint SCARD_SCOPE_TERMINAL = 1;
+        /// <summary>
+        /// The context is the system context, and any database operations are performed within the
+        /// domain of the system. (The calling application must have appropriate access permissions
+        /// for any database actions.)
+        /// </summary>
+        public const uint SCARD_SCOPE_SYSTEM = 2;
+        #endregion
+
+        #region SCARD_SHARE
+        /// <summary>
+        /// This application is not willing to share this card with other applications.
+        /// </summary>
+        public const int SCARD_SHARE_EXCLUSIVE = 1;
+        /// <summary>
+        /// This application is willing to share this card with other applications.
+        /// </summary>
+        public const int SCARD_SHARE_SHARED = 2;
+        /// <summary>
+        /// This application demands direct control of the reader, so it is not available to other applications.
+        /// </summary>
+        public const int SCARD_SHARE_DIRECT = 3;
+        #endregion
+
+        #region SCARD_DISPOSITION
+        /// <summary>
+        /// Do nothing on close
+        /// </summary>
+        public const int SCARD_LEAVE_CARD = 0;
+        /// <summary>
+        /// Reset on close
+        /// </summary>
+        public const int SCARD_RESET_CARD = 1;
+        /// <summary>
+        /// Power down on close
+        /// </summary>
+        public const int SCARD_UNPOWER_CARD = 2;
+        /// <summary>
+        /// Eject on close
+        /// </summary>
+        public const int SCARD_EJECT_CARD = 3;
+        #endregion
+
+        #region SCARD_STATE
+        public const uint SCARD_STATE_UNAWARE = 0x0000;
+        public const uint SCARD_STATE_IGNORE = 0x0001;
+        public const uint SCARD_STATE_CHANGED = 0x0002;
+        public const uint SCARD_STATE_UNKNOWN = 0x0004;
+        public const uint SCARD_STATE_UNAVAILABLE = 0x0008;
+        public const uint SCARD_STATE_EMPTY = 0x0010;
+        public const uint SCARD_STATE_PRESENT = 0x0020;
+        public const uint SCARD_STATE_ATRMATCH = 0x0040;
+        public const uint SCARD_STATE_EXCLUSIVE = 0x0080;
+        public const uint SCARD_STATE_INUSE = 0x0100;
+        public const uint SCARD_STATE_MUTE = 0x0200;
+        public const uint SCARD_STATE_UNPOWERED = 0x0400;
+        #endregion
+
+        #region READER_STATE
+        public const int READER_STATE_UNWARE = 0;
+        public const int READER_STATE_CHANGE = 1;
+        public const int READER_STATE_CARDREMOVE = 2;
+        public const int READER_STATE_CARDINSERT = 4;
+        #endregion
+        #endregion
+
+        #region ---- 宣告資料結構 ----
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct SCARD_READERSTATE
+        {
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string szReader;
+            public IntPtr pvUserData;
+            public uint dwCurrentState;
+            public uint dwEventState;
+            public uint cbAtr;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_ATR_LEN, ArraySubType = UnmanagedType.U1)]
+            public byte[] rgbAtr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SCARD_IO_REQUEST
+        {
+            public uint dwProtocol;
+            public uint cbPciLength;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct GUID
+        {
+            public uint Data1;
+            public ushort Data2;
+            public ushort Data3;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8, ArraySubType = UnmanagedType.U1)]
+            public byte[] Data4;
+        }
+        #endregion
+
+        #region ==== SCard APIs ====
+        //建立卡片連線
+        public static int ConnectCard(params string[] readerName)
+        {
+            if (0 == ContextHandle) return -1;
+            string reader = (0 < readerName.Length ? readerName[0] : string.IsNullOrEmpty(ReaderList[iReader]) ? "" : ReaderList[iReader]);
+            if (string.IsNullOrEmpty(reader)) return -1;
+            SendPci.dwProtocol = SCARD_PROTOCOL_Tx;
+            CheckCode(ErrorCode = SCardConnect(ContextHandle, reader, SCARD_SHARE_EXCLUSIVE, SendPci.dwProtocol, ref CardHandle, ref SendPci.dwProtocol));
+            RecvPci.dwProtocol = SendPci.dwProtocol;
+            return ErrorCode;
+        }
+        //中斷卡片斷線
+        public static int DisconnectCard()
+        {
+            if (0 == CardHandle) return -1;
+            ErrorCode = SCardDisconnect(CardHandle, SCARD_UNPOWER_CARD);
+            return ErrorCode;
+        }
+        //列出系統已註冊的卡
+        public static string[] ListCards()
+        {
+            uint cch = 0;
+            ErrorCode = SCardListCards(0, null, null, 0, null, ref cch);
+            CheckCode(ErrorCode);
+            cch <<= 1; //unicode長度乘以2
+            byte[] CardBytes = new byte[cch];
+            ErrorCode = SCardListCards(0, null, null, 0, CardBytes, ref cch);
+            CheckCode(ErrorCode);
+            string[] CardList = Encoding.Unicode.GetString(CardBytes).Split(new char[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
+            return CardList;
+        }
+        //列出可用的 Smart Card 讀卡機
+        public static string[] ListReaders()
+        {
+            uint ReaderSize = 0;
+            ErrorCode = SCardListReaders(ContextHandle, null, null, ref ReaderSize);
+            CheckCode(ErrorCode);
+            ReaderSize <<= 1; //unicode長度乘以2
+            byte[] ReaderBytes = new byte[ReaderSize];
+            ErrorCode = SCardListReaders(ContextHandle, null, ReaderBytes, ref ReaderSize);
+            CheckCode(ErrorCode);
+            string[] ReaderList = Encoding.Unicode.GetString(ReaderBytes).Split(new char[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
+            return ReaderList;
+        }
+        //檢查回應代碼
+        public static void CheckCode(int ecode)
+        {
+            if (ecode != 0)
+            {
+                //AppendOutput("Error #" + ErrorCode.ToString("X8"));
+                throw new Exception("Error #" + ecode.ToString("X8"));
+            }
+        }
+        //檢查回應代碼
+        public static void CheckCode()
+        {
+            CheckCode(ErrorCode);
+        }
+        //檢查狀態代碼
+        public static void CheckSW12()
+        {
+            string desc = null;
+            switch (SW1)
+            {
+                case 0x90: //ok
+                    break;
+                case 0x66: desc = (
+                    0x02 == SW2 || 0x04 == SW2 ? "No such record." :
+                    0x08 == SW2 ? "PIN error." :
+                    0x10 == SW2 ? "PIN locked." : "Error.");
+                    break;
+                default: desc = "Error.";
+                    break;
+            }
+            if (desc != null) throw new Exception(string.Format("({0:X4}) {1}", SW12, desc));
+        }
+        //執行 APDU 命令
+        public static byte[] TransmitAPDU(string apdu, bool check)
+        {
+            byte[] apducmd = HexToBytes(apdu);
+            uint recvlen = 264;
+            RecvBuffer = new byte[recvlen];
+            RecvLength = 0;
+            ErrorCode = SCardTransmit(CardHandle, ref SendPci, apducmd, (uint)apducmd.Length, ref RecvPci, RecvBuffer, ref recvlen);
+            CheckCode(ErrorCode);
+            if (recvlen >= 2)
+            {
+                RecvLength += recvlen - 2;
+                SW1 = RecvBuffer[RecvLength];
+                SW2 = RecvBuffer[RecvLength + 1];
+                SW12 = SW1 << 8 | SW2;
+                if (IsDebugMode)
+                    AppendOutput("> {0}({1:X4}){2}", apdu, SW12, (recvlen > 2 ? "\r\n" + BytesToHex(RecvBuffer, (int)recvlen - 2) : ""));
+                if (check) CheckSW12();
+            }
+            else
+            { SW1 = SW2 = 0; SW12 = 0; }
+            Array.Resize<byte>(ref RecvBuffer, (int)RecvLength);
+            return RecvBuffer;
+        }
+        //執行 APDU 命令
+        public static byte[] TransmitAPDU(string apdu)
+        {
+            return TransmitAPDU(apdu, true);
+        }
+
+        public static bool TransmitSIM(string apdu, bool autogetresponse)
+        {
+            TransmitAPDU(apdu, false);
+            string desc = null;
+            switch (SW1)
+            {
+                case 0x90: return true;
+                case 0x91: //SW2=length of the response data
+                case 0x9E:
+                case 0x9F:
+                    if (autogetresponse) TransmitAPDU("A0C00000" + SW2.ToString("X2"), false);
+                    return true;
+                case 0x94: desc = (
+                    0x00 == SW2 ? "no EF selected" :
+                    0x02 == SW2 ? "out of range (invalid address)" :
+                    0x04 == SW2 ? "file ID/pattern not found" :
+                    0x08 == SW2 ? "file is inconsistent with the command" : "");
+                    break;
+                case 0x98: desc = (
+                    0x02 == SW2 ? "no CHV initialized" :
+                    0x04 == SW2 ? "authentication failed(at least one attempt left)" :
+                    0x08 == SW2 ? "in contradiction with CHV status" :
+                    0x10 == SW2 ? "in contradiction with invalidation status" :
+                    0x40 == SW2 ? "CHV blocked" :
+                    0x50 == SW2 ? "increase cannot be performed, Max value reached" : "");
+                    break;
+                case 0x67: desc = "incorrect parameter P3";
+                    break;
+                case 0x6B: desc = "incorrect parameter P1 or P2";
+                    break;
+                case 0x6D: desc = "unknown instruction code given in the command";
+                    break;
+                case 0x6E: desc = "wrong instruction class given in the command";
+                    break;
+                case 0x6F: desc = "technical problem with no diagnostic given";
+                    break;
+                default: desc = "unkown error";
+                    break;
+            }
+            if (!string.IsNullOrEmpty(desc)) throw new Exception(string.Format("({0:X4}){1}", SW12, desc));
+            return false;
+        }
+
+        public static void TransmitNFC(string apdu, bool autogetresponse)
+        {
+            TransmitAPDU(apdu, false);
+            string desc = null;
+            switch (SW1)
+            {
+                case 0x90:
+                    break;
+                case 0x61: //SW2=length of the response data
+                    if (autogetresponse) TransmitAPDU("FFC00000" + SW2.ToString("X2"), false);
+                    break;
+                default: desc = "error";
+                    break;
+            }
+            if (desc != null) throw new Exception(string.Format("{1}({0:X4})", SW12, desc));
+        }
+        #endregion
+
+        #region ---- 十六進制與位元轉換 ----
+        public static string BytesToHex(byte[] ba, int start, int length)
+        {
+            if (length < ba.Length) Array.Resize<byte>(ref ba, length);
+            int len = 0;
+            string separator = "";
+            string[] hexstrs = Array.ConvertAll<byte, string>(ba, delegate(byte b)
+            {
+                switch (++len)
+                {
+                    case 16: separator = "\r\n"; len = 0; break;
+                    case 8: //separator = " "; break;
+                    case 4:
+                    case 12: separator = " "; break;
+                    default: separator = ""; break;
+                }
+                return b.ToString("X2") + separator;
+            });
+            return string.Join("", hexstrs).TrimEnd(separator.ToCharArray());
+        }
+        public static string BytesToHex(byte[] ba, int length)
+        {
+            return BytesToHex(ba, 0, length);
+        }
+        public static string BytesToHex(byte[] ba)
+        {
+            return BytesToHex(ba, 0, ba.Length);
+        }
+        public static byte[] HexToBytes(string hex)
+        {
+            MatchCollection mc = Regex.Matches(Regex.Replace(hex, @"[^a-zA-Z0-9]+", ""), @"([a-zA-Z0-9]{2})");
+            byte[] bytes = new byte[mc.Count];
+            for (int i = 0; i < mc.Count; i++)
+                bytes[i] = Convert.ToByte(mc[i].Value, 16);
+            return bytes;
+        }
+        //拆解7bit編碼
+        public static string Decode7bit(byte[] bytes, int pos, int len)
+        {
+            if (0 >= len || pos >= bytes.Length) return string.Empty;
+            StringBuilder s = new StringBuilder(len);
+            int b = 0, c = 0, k = 0;
+            for (int i = pos; i < bytes.Length && s.Length < len; i++)
+            {
+                c = b | bytes[i] << k++;
+                b = c >> 7;
+                s.Append((char)(0x7f & c));
+                if (7 == k && 0 != b)
+                {
+                    s.Append((char)b);
+                    k = b = 0;
+                }
+            }
+            return s.ToString();
+        }
+        //組合7bit編碼
+        public static byte[] Encode7bit(string val)
+        {
+            if (string.IsNullOrEmpty(val)) return null;
+            List<byte> s = new List<byte>(val.Length);
+            int c = 0, k = 0, j = 0;
+            for (int i = 0; i < val.Length; i++)
+            {
+                c = val[i];
+                if (0 != (k = i & 7))
+                    s[j++] |= (byte)((c & ~(~0 << k)) << (8 - k));
+                if (7 != k)
+                    s.Add((byte)(c >> k));
+            }
+            return s.ToArray();
+        }
+        public static string ComposeADN(string name, string number)
+        {
+            return string.Concat(ComposeADNName(name), ComposeADNNumber(number));
+        }
+        public static string ComposeADNName(string name)
+        {
+            if (name.Length > 16) name = name.Remove(16);
+            char[] nameChars = name.ToCharArray();
+            byte[] nameBytes = new byte[16];
+            string nameHex = string.Empty;
+            int basePointer = -1, bytePos = 0, nameLen = 0;
+            bool allASCII = false;
+            while (nameLen <= nameChars.Length && 0 < name.Length)
+            {
+                allASCII = Array.TrueForAll<char>(nameChars, delegate(char ch) { return ch < 0x80; });
+                if (allASCII)
+                {
+                    nameBytes = Encoding.ASCII.GetBytes(nameChars);
+                    nameHex = BytesToHex(nameBytes, 16);
+                    break;
+                }
+                else
+                {
+                    nameBytes.Initialize();
+                    bool useBase = (nameChars.Length > 7);
+                    if (useBase)
+                    {
+                        basePointer = -1;
+                        foreach (char ch in nameChars)
+                        {
+                            if (ch > 0x7f)
+                            {
+                                if (basePointer == -1)
+                                    basePointer = (ch & 0xff80);
+                                else
+                                    useBase &= (basePointer == (ch & 0xff80));
+                            }
+                        }
+                    }
+                    if (useBase)
+                    {
+                        if ((basePointer & 0x8000) == 0)
+                        {
+                            nameBytes[0] = 0x81;
+                            nameBytes[2] = (byte)(basePointer >> 7);
+                            bytePos = 3;
+                        }
+                        else
+                        {
+                            nameBytes[0] = 0x82;
+                            nameBytes[2] = (byte)(basePointer >> 8);
+                            nameBytes[3] = (byte)(basePointer & 0xff);
+                            bytePos = 4;
+                        }
+                        for (nameLen = 0; (bytePos < 16) && (nameLen < nameChars.Length); bytePos++, nameLen++)
+                        {
+                            char ch = nameChars[nameLen];
+                            if (ch > 0x7f)
+                                nameBytes[bytePos] = (byte)((ch & 0x7f) | 0x80);
+                            else
+                                nameBytes[bytePos] = (byte)ch;
+                        }
+                        nameBytes[1] = (byte)nameLen;
+                    }
+                    else
+                    {
+                        nameBytes[0] = 0x80;
+                        for (bytePos = 1, nameLen = 0; (bytePos < 15) && (nameLen < nameChars.Length); nameLen++)
+                        {
+                            char ch = nameChars[nameLen];
+                            nameBytes[bytePos++] = (byte)(ch >> 8);
+                            nameBytes[bytePos++] = (byte)(ch & 0xff);
+                        }
+                    }
+                    nameHex = BytesToHex(nameBytes, bytePos);
+                }
+                Array.Resize<char>(ref nameChars, nameChars.Length - 1);
+            }
+            return nameHex.PadRight(32, 'F');
+        }
+        public static string ComposeADNNumber(string phone)
+        {
+            if (phone.Length > 28) phone = phone.Remove(28);
+            string phoneHex = string.Empty;
+            if (Regex.IsMatch(phone, @"^\+?[0-9]+([p\*][0-9]*)*$", RegexOptions.IgnoreCase))
+            {
+                char[] phoneChars = phone.ToLower().ToCharArray();
+                byte[] phoneBytes = new byte[16];
+                char first = phoneChars[0];
+                int phonePos = 0, n, m;
+                phoneBytes.Initialize();
+                phoneBytes[1] = 0x81;
+                if (first == '+')
+                {
+                    phoneBytes[1] |= 0x10;
+                    phonePos++;
+                }
+                for (n = 2, m = 0; n < 16; n += m, m ^= 1)
+                {
+                    if (phonePos < phoneChars.Length)
+                    {
+                        char dig = phoneChars[phonePos++];
+                        byte nib = (byte)(dig == 'p' ? 0x0c : (dig == '*' ? 0x0a : 0x0f & dig));
+                        phoneBytes[n] |= (byte)(nib << (m << 2));
+                        if (0 == m) phoneBytes[0]++;
+                    }
+                    else
+                    {
+                        if (0 != m) phoneBytes[n++] |= (byte)0xf0;
+                        break;
+                    }
+                }
+                phoneHex = BytesToHex(phoneBytes, n);
+            }
+            return phoneHex.PadRight(32, 'F');
+        }
+        #endregion
+
+        #region **** FPlus(FISC II) ****
+        //是否 FISCII
+        public static bool SelectAID(string aid)
+        {
+            TransmitAPDU("00A4040008" + aid + "00");
+            IsFISC2 = BytesToHex(RecvBuffer).Contains(aid);
+            return IsFISC2;
+        }
+        //SelectEF
+        public static void SelectEF(string efid)
+        {
+            TransmitAPDU("00A4020002" + efid);
+        }
+        //SelectDF
+        public static void SelectDF(string dfid)
+        {
+            TransmitAPDU("00A4010002" + dfid);
+        }
+        //SelectPDF
+        public static void SelectPDF()
+        {
+            TransmitAPDU("00A40300");
+        }
+        //ReadRecord
+        public static void ReadRecord(int rec)
+        {
+            TransmitAPDU("00B2" + rec.ToString("X2") + "0400");
+        }
+        //ReadRecord with EFID
+        public static void ReadRecord(string efid, int rec)
+        {
+            SelectEF(efid);
+            ReadRecord(rec);
+        }
+        //ReadAllRecords
+        public static void ReadAllRecords()
+        {
+            TransmitAPDU("00B20105000000");
+        }
+        //ReadAllRecords with EFID
+        public static void ReadAllRecords(string efid)
+        {
+            SelectEF(efid);
+            ReadAllRecords();
+        }
+        //VerifyPIN
+        public static void VerifyPIN(string pin)
+        {
+            string pinpad = pin.PadRight(16, 'F').Substring(0, 16);
+            TransmitAPDU("0020001008" + pinpad);
+        }
+        //GenerateRandom
+        public static void GenerateRandom()
+        {
+            TransmitAPDU("0086000008");
+        }
+        //拆解發卡銀行與持卡帳號
+        public static int ParseEF1001()
+        {
+            ReadAllRecords("1001");
+            return EF_1001.Parse(RecvBuffer);
+        }
+        //拆解(約定)轉入帳號
+        public static int ParseEF1002()
+        {
+            ReadAllRecords("1002");
+            return EF_1002.Parse(RecvBuffer);
+        }
+        //拆解交易驗證記錄
+        public static int ParseTSEF1080()
+        {
+            SelectEF("1080");
+            TSEF_1080.iCount = 0;
+            int i, j, reclen;
+            for (i = 0; ; i++)
+            {
+                TransmitAPDU("00B2" + (i + 1).ToString("X2") + "0400", false);
+                if (SW12 != 0x9000) break;
+                j = 2;
+                reclen = RecvBuffer[j++];
+                TSEF_1080.Records[i, 0] = Encoding.Default.GetString(RecvBuffer, j, reclen);
+                j += reclen;
+                reclen = RecvBuffer[j++];
+                TSEF_1080.Records[i, 1] = Encoding.Default.GetString(RecvBuffer, j, reclen);
+                j += reclen;
+                reclen = RecvBuffer[j++] << 8 | RecvBuffer[j++];
+                TSEF_1080.Records[i, 2] = BytesToHex(RecvBuffer, j, reclen);
+                Console.Write("1080#{0}\r", i);
+            }
+            return TSEF_1080.iCount = i;
+        }
+        //列出檔案
+        public static string[] ListFile()
+        {
+            TransmitAPDU("00AA0000000000", false);
+            List<string> files = new List<string>(RecvBuffer.Length / 3);
+            if ((0 == ErrorCode) && (0x9000 == SW12))
+            {
+                byte[] recv = RecvBuffer;
+                string efid;
+                byte type;
+                for (int i = 0; i < recv.Length; i++)
+                {
+                    efid = recv[i].ToString("X2") + recv[++i].ToString("X2");
+                    type = recv[++i];
+                    files.Add(String.Format("{0} {1:X2} [{2}]", efid, type, GetFileType(type)));
+                    if (0 != (0x01 & type))  //is a DF
+                    {
+                        SelectDF(efid);
+                        files.Add("  " + string.Join("\r\n  ", ListFile()));
+                        SelectPDF();
+                    }
+                }
+            }
+            return files.ToArray();
+        }
+        //檔案類型
+        private static string GetFileType(byte t)
+        {
+            return
+                (0x01 & t) != 0 ? "DF" :
+                0x90 == t ? "AEF" : //Active secrets EF
+                0xA0 == t ? "TEF" : //Transactions EF(不使用)
+                0xB0 == t ? "NEF" : //Neutral secrets EF
+                0xC0 == t ? "SEF" : //Special value EF(不使用)
+                0xD0 == t ? "TSEF" : //Transaction serial number EF
+                0x80 == t ? "PEF" : //Purse EF
+                0x82 == t ? "PEF2" : //Purse EF 2
+                0x00 == t ? "DEF" : //Data EF
+                "";
+        }
+
+        private static void FISC_II()
+        {
+            SelectAID("A000000172950001");  //Check FISC2
+
+            //#region *** ListFile
+            //string[] flist = ListFile();
+            //if (flist.Length > 0)
+            //    AppendOutput("ListFile\r\n{0}\r\n", String.Join("\r\n", flist));
+            //#endregion
+
+            #region *** 金融帳號 EF1001
+            ParseEF1001();
+            AppendOutput("發行單位\r\n{0}\r\n", EF_1001.Issuer);
+            AppendOutput("備 註 欄\r\n{0}\r\n", BytesToHex(EF_1001.Remark));
+            AppendOutput("金融帳號\r\n{0}\r\n", string.Join("\r\n", EF_1001.Accounts, 0, EF_1001.iCount));
+            #endregion
+
+            #region *** 約定帳號 EF1002
+            ParseEF1002();
+            AppendOutput("約定帳號\r\n{0}", EF_1002.ConvertToString());
+            #endregion
+
+            #region *** 交易驗證 TSEF1080
+            ParseTSEF1080();
+            AppendOutput("交易驗證\r\n{0}", TSEF_1080.ConvertToString());
+            #endregion
+
+        //FINE: ;
+        }
+
+        public static class EF_1001
+        {
+            public static string Issuer = "00000000";  //發卡單位
+            public static byte[] Remark = new byte[30];  //備註欄
+            public static string[] Accounts = new string[8];  //卡片帳號
+            public static int iCount = 0;
+            public static int Parse(byte[] buffer)
+            {
+                int reclen = 0, i, j;
+                string acct;
+                for (iCount = 0, i = 0, j = 0; j < buffer.Length; i++)
+                {
+                    reclen = buffer[++j];
+                    ++j;
+                    if (i == 0)
+                        Issuer = Encoding.Default.GetString(buffer, j, reclen);
+                    else if (i == 1)
+                        Array.Copy(buffer, j, Remark, 0, reclen);
+                    else
+                    {
+                        acct = Encoding.Default.GetString(buffer, j, reclen);
+                        if (!string.IsNullOrEmpty(acct.Trim(' ', '0')))
+                            Accounts[iCount++] = acct;
+                    }
+                    j += reclen;
+                }
+                return iCount;
+            }
+        }
+
+        public static class EF_1002
+        {
+            public static string[,] Accounts = new string[8, 2];  //(約定)轉入帳號
+            public static int iCount = 0;
+            public static string ConvertToString()
+            {
+                if (iCount == 0) return "(無)\r\n";
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < iCount; i++)
+                    sb.AppendFormat("{1} ({0})\r\n", Accounts[i, 0], Accounts[i, 1]);
+                return sb.ToString();
+            }
+            public static int Parse(byte[] buffer)
+            {
+                int reclen = 0, i, j;
+                string acct;
+                for (iCount = 0, i = 0, j = 0; j < buffer.Length; i++)
+                {
+                    reclen = buffer[++j];
+                    acct = Encoding.Default.GetString(buffer, ++j, reclen);
+                    if (!string.IsNullOrEmpty(acct.Trim(' ', '0', '\0')))
+                    {
+                        Accounts[iCount, 0] = acct.Substring(0, 3);
+                        Accounts[iCount, 1] = acct.Substring(8);
+                        iCount++;
+                    }
+                    j += reclen;
+                }
+                return iCount;
+            }
+        }
+
+        public static class TSEF_1080
+        {
+            public static string[,] Records = new string[15, 3];  //交易記錄10筆或15筆
+            public static int iCount = 0;
+            public static string ConvertToString()
+            {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < iCount; i++)
+                    sb.AppendFormat("({0}) {1} {2}\r\n", Records[i, 0], Records[i, 1], Records[i, 2]);
+                return sb.ToString();
+            }
+        }
+
+        public static class EF_0001
+        {
+            //rec#01
+            public static string Issuer = "00000000";  //發卡單位
+            public static string AccountNo = new string('0', 20);  //卡片帳號
+            public static string SerialNo = "01";  //卡片序號
+            public static string TDate = "29991231";  //失效日期
+            //rec#02
+            public static string Identity = "A199999999";  //持卡人統編
+            public static string Birthday = "19990101";  //持卡人生日
+            //rec#03
+            public static string CountryCode = "101";  //國別碼
+            public static string CurrencyCode = "901";  //幣別碼
+            public static string AmountPower = "1";  //金額冪次
+
+            public static void Parse(byte[] buffer)
+            {
+                for (int i = 0, j = 0; j < buffer.Length; i++)
+                {
+                    j += 2;
+                    if (i == 0)
+                    {
+                        Issuer = BitConverter.ToString(buffer, j, 4).Replace("-", "");
+                        j += 4;
+                        AccountNo = BitConverter.ToString(buffer, j, 10).Replace("-", "");
+                        j += 10;
+                        SerialNo = BitConverter.ToString(buffer, j, 1).Replace("-", "");
+                        j += 1;
+                        TDate = BitConverter.ToString(buffer, j, 4).Replace("-", "").Insert(4, "/").Insert(2, "/");
+                        j += 4;
+                    }
+                    else if (i == 1)
+                    {
+                        Identity = Encoding.ASCII.GetString(buffer, j, 10);
+                        j += 10;
+                        Birthday = BitConverter.ToString(buffer, j, 4).Replace("-", "").Insert(4, "/").Insert(2, "/");
+                        j += 4;
+                    }
+                    else //i==2
+                    {
+                        CountryCode = BitConverter.ToString(buffer, j, 3).Replace("-", "");
+                        j += 3;
+                        CurrencyCode = BitConverter.ToString(buffer, j, 3).Replace("-", "");
+                        j += 3;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region **** GSM/TELECOM(SIM) ****
+        //UNBLOCK CHV
+        //CLASS INS P1 P2   P3 PUK    New CHV
+        //A0    2C  00 CHV# 10 B(1-8) B(9-16)
+        //Parameter P2 specifies the CHV:
+        //- 00 = CHV1;
+        //- 02 = CHV2.
+        //NOTE: The coding '00' for CHV1 differs from the coding of CHV1 used for other commands
+        //READ RECORD/UPDATE RECORD
+        //CLASS INS P1   P2   P3
+        //A0  B2/DC Rec# Mode lgth
+        //Parameter P2 specifies the mode:
+        //- '02' = next record;
+        //- '03' = previous record;
+        //- '04' = absolute mode/current mode; the record number is given in P1 with P1='00' denoting the current record.
+
+        private static bool ScanDF(int dfid, bool recur)
+        {
+            TransmitAPDU("A0A4000002" + dfid.ToString("X4"), false);
+            if (0x91 != (0x91 & SW1))
+                return false;
+            byte[] rbuff = TransmitAPDU("A0C00000" + SW2.ToString("X2"), true);
+            if ((0x3f00 != dfid) && (2 != rbuff[6]))
+                return false; //check if DF type
+            int dfs = rbuff[14];
+            int efs = rbuff[15];
+            int df = (dfid >> 8) - 0x20;
+            int ef = (dfid >> 8) - 0x10;
+            int size = ((rbuff[2] << 8) | rbuff[3]);
+            AppendOutput("[{0:X4}]+DF:{1} EF:{2} Free:{3}", dfid, dfs, efs, size);
+            for (int ei = 0; ei <= 0xff /*&& efs > 0*/; ei++) //scan EF
+            {
+                string efid = ef.ToString("X2") + ei.ToString("X2");
+                TransmitAPDU("A0A4000002" + efid, false);
+                if (0x91 != (0x91 & SW1)) continue;
+                rbuff = TransmitAPDU("A0C00000" + SW2.ToString("X2"), true);
+                if (4 != rbuff[6]) break;
+                --efs;
+                size = ((rbuff[2] << 8) | rbuff[3]);
+                if (0x00 == rbuff[13])
+                {
+                    TransmitAPDU("A0B00000" + size.ToString("X2"), false);
+                    //if  continue;
+                    AppendOutput("[{0}]{1}", efid, (0x9000 != SW12 ? "(" + SW12.ToString("X2") + ")" : BytesToHex(RecvBuffer)));
+                }
+                else if (0 != (0x01 & rbuff[13]))
+                {
+                    int rlen = rbuff[14];
+                    int recs = size / rlen;
+                    AppendOutput("[{0}]{1}(0x{1:x2})x{2}(0x{2:x2})={3}(0x{3:x4})bytes", efid, recs, rlen, size);
+                    for (int ri = 1; ri <= recs; ri++)
+                    {
+                        TransmitAPDU("A0B20002" + rlen.ToString("X2"), false);
+                        if (0x9000 != SW12)
+                        {
+                            AppendOutput("({0:X4})", SW12);
+                            break;
+                        }
+                        AppendOutput("{0}:{1}", ri, BytesToHex(RecvBuffer));
+                    }
+                }
+            }
+            AppendOutput();
+            if (recur && 0x3f != df)
+            {
+                if (0x1f == df) df = 0x7f;
+                for (int di = 0; di <= 0xff /*&& dfs > 0*/; di++) //scan DF
+                {
+                    if (ScanDF((df << 8 | di), recur))
+                    {
+                        TransmitAPDU("A0A4000002" + dfid.ToString("X4"), false);
+                        --dfs;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static int chvremaining = 0;
+        private static int unblockremaining = 0;
+
+        private static string InputPIN(bool isverify)
+        {
+            if (isverify)
+                AppendOutput(@"[警告]輸入密碼連續錯誤三次會自動鎖卡
+一旦鎖卡可用PUK碼(洽詢電信公司)解開!
+您尚有{0}次機會測試PIN密碼", chvremaining);
+            Console.Write("(要中止執行可按Ctrl-C)\r\n");
+            string _pin = null;
+            while (true)
+            {
+                Console.Write("請輸入PIN密碼(4~8位數字): ");
+                _pin = Console.ReadLine();
+                if (Regex.IsMatch(_pin, "^[0-9]{4,8}$")) break;
+                AppendOutput("密碼必須是4~8位數字");
+            }
+            return _pin;
+        }
+
+        private static string GetNewPIN()
+        {
+            string _pin = null;
+            while (true)
+            {
+                Console.Write("設定新的PIN密碼(4~8位數字): ");
+                _pin = Console.ReadLine();
+                if (Regex.IsMatch(_pin, "^[0-9]{4,8}$")) break;
+                AppendOutput("密碼必須是4~8位數字");
+            }
+            return _pin;
+        }
+
+        private static void GSM_SIM()
+        {
+            #region *** Select MF/Verify CHV
+            SelectSIM(0x3F00);
+            bool chvdisabled = (0 != (0x80 & RecvBuffer[13]));  //CHV功能狀態(使用SIM卡要驗PIN1否?)
+            chvremaining = (0x0f & RecvBuffer[18]);  //剩餘測試PIN1錯誤次數
+            unblockremaining = (0x0f & RecvBuffer[19]);  //剩餘測試PUK錯誤次數
+#if _CHV1_
+            string oldpin = "";
+            string newpin = "";
+            if (chvremaining <= 0)
+            {
+                AppendOutput("[警告]SIM卡已被鎖住,輸入PUK碼可解開\r\n您尚有{0}次機會測試PUK碼", unblockremaining);
+                if (unblockremaining <= 0)
+                    AppendOutput("[警告]此SIM卡永遠無法解開了");
+                else
+                {
+                    Console.Write("(要中止執行可按Ctrl-C)\r\n");
+                    while (true)
+                    {
+                        Console.Write("請輸入PUK碼: ");
+                        oldpin = Console.ReadLine();
+                        if (Regex.IsMatch(oldpin, "^[0-9]{4,8}$")) break;
+                        AppendOutput("密碼必須是4~8位數字");
+                    }
+                    newpin = GetNewPIN();
+                    UnblockCHV(oldpin, newpin);
+                }
+                goto FINE;
+            }
+            else
+            {
+                if (chvdisabled)
+                {
+                    //if (string.IsNullOrEmpty(oldpin))
+                    //    if (null == (oldpin = InputPIN(true))) goto FINE;
+                    //if (!EnableCHV(oldpin)) goto FINE;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(oldpin))
+                        if (null == (oldpin = InputPIN(true))) goto FINE;
+                    if (!VerifyCHV(oldpin)) goto FINE;
+                    //if (!DisableCHV(oldpin)) goto FINE;
+                }
+            }
+            //if (string.IsNullOrEmpty(newpin))
+            //    if (null == (newpin = GetNewPIN())) goto FINE;
+            //if (!ChangeCHV(oldpin, newpin)) goto FINE;
+#endif
+            //ScanDF(0x3F00, true); //recursive into sub DF
+            //goto FINE;
+
+            SelectSIM(0x2FE2);  //2FE2=ICCID
+            ReadBinarySIM(RecvBuffer[3]);
+            AppendOutput("[2FE2]ICCID={0}\r\n", UnpackBCD(RecvBuffer));
+            #endregion
+            //goto TELECOM;
+
+            #region *** DF 7F20 GSM
+        //GSM:
+            SelectSIM(0x7F20);  //GSM
+            //SelectSIM(0x7F21);  //DCS1800
+
+            SelectSIM(0x6F07);  //6F07=IMSI(International Mobile Subscriber Identity)
+            ReadBinarySIM(RecvBuffer[3]);
+            string IMSI = UnpackBCD(RecvBuffer).Substring(3);
+            AppendOutput("[6F07]IMSI={0} ({1})\r\n", IMSI.Insert(5, " "), Telecom(IMSI));
+
+            //SelectSIM(0x6F7E);  //6F7E=LOCI(Location Information):TMSI,LAI,...
+            //ReadBianrySIM(RecvBuffer[3]);
+            //AppendOutput("[6F7E]TMSI={0} LAI={1}{2:X2}{3:X2} TIMER={4} STATUS={5}({6})\r\n", BytesToHex(RecvBuffer, 4),
+            //    UnpackBCD(RecvBuffer, 4, 2) + UnpackBCD(RecvBuffer, 6, 1), RecvBuffer[7], RecvBuffer[8], RecvBuffer[9], RecvBuffer[10],
+            //    (0 == RecvBuffer[10] ? "updated" : 1 == RecvBuffer[10] ? "not updated" :
+            //    2 == RecvBuffer[10] ? "PLMN not allowed" : 3 == RecvBuffer[10] ? "Location Area not allowed" : ""));
+
+            //SelectSIM(0x6F30);  //6F30=PLMN(Public Land Mobile Network)
+            //ReadBinarySIM(RecvBuffer[3]);
+            //AppendOutput("[6F30]PLMN={0},{1},{2},{3}\r\n", UnpackBCD(RecvBuffer, 2) + UnpackBCD(RecvBuffer, 2, 1),
+            //    UnpackBCD(RecvBuffer, 3, 2) + UnpackBCD(RecvBuffer, 5, 1),
+            //    UnpackBCD(RecvBuffer, 6, 2) + UnpackBCD(RecvBuffer, 8, 1),
+            //    UnpackBCD(RecvBuffer, 9, 2) + UnpackBCD(RecvBuffer, 11, 1));
+
+            SelectSIM(0x6F7B);  //6F7B=FPLMN(Forbidden PLMN)
+            ReadBinarySIM(RecvBuffer[3]);
+            AppendOutput("[6F7B]FPLMN={0} {1} {2} {3}\r\n", UnpackBCD(RecvBuffer, 0, 2) + UnpackBCD(RecvBuffer, 2, 1),
+                UnpackBCD(RecvBuffer, 3, 2) + UnpackBCD(RecvBuffer, 5, 1),
+                UnpackBCD(RecvBuffer, 6, 2) + UnpackBCD(RecvBuffer, 8, 1),
+                UnpackBCD(RecvBuffer, 9, 2) + UnpackBCD(RecvBuffer, 11, 1));
+
+            SelectSIM(0x6FAE);  //6FAE=PHASE(Phase Identification)
+            ReadBinarySIM(RecvBuffer[3]);
+            AppendOutput("[6FAE]Phase {0}\r\n", (0 == RecvBuffer[0] ? "1" : 1 == RecvBuffer[0] ? "2" : "2+"));  //0=phase1/2,3=phase2
+
+            //SelectSIM(0x6F38);  //6F38=SST(SIM Service Table)
+            //ReadBinarySIM(RecvBuffer[3]);
+            //AppendOutput("[6F38]SST={0}\r\n", BytesToHex(RecvBuffer));
+
+            //SIM.EF ACM = ReadEFSIM(0x6F39);  //6F39=ACM(Accumulated call meter)
+            //AppendOutput("[6F39]({0}x{1})", ACM.RecordCount, ACM.RecordLength);
+            //for (int acmi = 0; acmi < ACM.RecordCount; )
+            //{
+            //    RecvBuffer = ACM[acmi++];
+            //    AppendOutput("{0}:{1}", acmi, BytesToHex(RecvBuffer));
+            //}
+
+            //byte[] rnd = new byte[16];
+            //new Random().NextBytes(rnd);
+            //TransmitSIM("A088000010" + BytesToHex(rnd), true);  //RUN GSM ALGORITHM
+            //AppendOutput("(A3A8)SRES={0} Kc={1}\r\n", BytesToHex(RecvBuffer, 4), BytesToHex(RecvBuffer, 4, 8));
+
+            //SelectSIM(0x6F20);  //6F20=Kc(Ciphering key Kc)
+            //ReadBinarySIM(RecvBuffer[3]);
+            //AppendOutput("[6F20]Kc={0} n={1}{2}\r\n", BytesToHex(RecvBuffer, 8), RecvBuffer[8],
+            //    (7 == RecvBuffer[8] ? "(not available)" : ""));
+            #endregion
+            //goto FINE;
+
+            #region *** DF 7F10 TELECOM
+        //TELECOM:
+            SelectSIM(0x7F10);
+            //goto SMSP;
+        //ADN:
+            #region --- EF 6F3A ADN(Abbreviated dialling numbers)
+            SIM.EF ADN = ReadEFSIM(0x6F3A);
+            AppendOutput("[6F3A]電話簿(容量{0})\r\n\r\n序) {1,-20}姓名\r\n{2}", ADN.RecordCount, "電話號碼", "".PadLeft(40, '-'));
+            //goto LND;
+            int adnlen = ADN.RecordLength - 14;
+            for (int a = 1; a <= ADN.RecordCount; a++)
+            {
+                RecvBuffer = ADN[a]; //或ADN.NextRecord
+                if (0xff != (RecvBuffer[0] & RecvBuffer[adnlen]))  //非空
+                    AppendOutput("{0,2}) {1,-24}{2}", a,
+                        ADN.ParseNumber(1 + adnlen, 1 + RecvBuffer[adnlen]), ADN.ParseName(0, adnlen));
+            }
+            AppendOutput("{0}\r\n", "".PadLeft(40, '-'));
+            //UpdateRecordSIM(n, "".PadLeft(2 * ADN.RecordLength, 'F')); //清空
+            #endregion
+            //goto SMS;
+        //LND:
+            #region --- EF 6F44 LND(Last number dialled)
+            SIM.EF LND = ReadEFSIM(0x6F44);  //6F44=Last number dialled/6F3B=Fixed dialling numbers
+            AppendOutput("[6F44]最後撥號(容量{0})\r\n\r\n序) {1,-20}姓名\r\n{2}", LND.RecordCount, "電話號碼", "".PadLeft(40, '-'));
+            for (int d = 1; d <= LND.RecordCount; d++)
+            {
+                RecvBuffer = LND[d];
+                int namlen = LND.RecordLength - 14;
+                if (0xff == (RecvBuffer[0] & RecvBuffer[namlen]))  //空
+                {
+                    //AppendOutput("{0,2})", d);
+                    //continue;
+                }
+                else
+                {
+                    int numlen = RecvBuffer[namlen];
+                    byte[] lname = new byte[namlen];
+                    byte[] lnumber = new byte[numlen];
+                    Array.Copy(RecvBuffer, lname, namlen);
+                    Array.Copy(RecvBuffer, 1 + namlen, lnumber, 0, numlen);
+                    AppendOutput("{0,2}) {1,-24}{2}", d, AsNumber(lnumber), AsName(lname));
+                }
+            }
+            AppendOutput("{0}\r\n", "".PadLeft(40, '-'));
+            #endregion
+            //goto FINE;
+        //SMSP:
+            #region --- SMS Paramters
+            SIM.EF SMSP = ReadEFSIM(0x6F42);  //6F42=SMSP(SMS Paramters)
+            AppendOutput("[6F42]訊息中心(容量{0})\r\n{1}", SMSP.RecordCount, "".PadLeft(40, '-'));
+            int smsplen = SMSP.RecordLength - 14;
+            for (int p = 1; p <= SMSP.RecordCount; p++)
+            {
+                RecvBuffer = SMSP[p];
+                AppendOutput(SMSP.ParseNumber(smsplen, 1 + RecvBuffer[smsplen]));
+            }
+            AppendOutput("{0}\r\n", "".PadLeft(40, '-'));
+            #endregion
+            //goto FINE;
+        //SMS:
+            #region --- Short Message Service
+            SIM.EF SMS = ReadEFSIM(0x6F3C);  //6F3C=Short messages
+            AppendOutput("[6F3C]簡訊內容(容量{0})\r\n\r\n序) {1,-14}[時間]\r\n{2}", SMS.RecordCount, "發送人", "".PadLeft(40, '-'));
+            for (int y = 1; y <= SMS.RecordCount; y++)
+            {
+                RecvBuffer = SMS[y];
+                Queue<byte> qu = new Queue<byte>((IEnumerable<byte>)RecvBuffer);
+                byte status = qu.Dequeue();  //0=free/1=used
+                if (0xff == qu.Peek())  //is empty?
+                {
+                    AppendOutput("{0,2}) (空)", y);
+                }
+                else
+                {
+                    status &= 7;
+                    SIM.SMSPDU pdu = new SIM.SMSPDU();
+                    pdu.SMSCLength = qu.Dequeue();
+                    if (pdu.SMSCLength == 0)
+                        pdu.SMSCNumber = ""; //手機內定
+                    else
+                    {
+                        pdu.SMSCNumberBytes = new byte[pdu.SMSCLength];
+                        for (int c = 0; c < pdu.SMSCNumberBytes.Length; c++)
+                            pdu.SMSCNumberBytes[c] = qu.Dequeue();
+                        pdu.SMSCNumber = AsNumber(pdu.SMSCNumberBytes);
+                    }
+                    pdu.FirstOctet = qu.Dequeue();
+                    if (1 == (0x03 & pdu.FirstOctet)) //submit
+                    {
+                        pdu.MessageReference = qu.Dequeue();
+                        pdu.AddressLength = qu.Dequeue();
+                        pdu._phoneNumber = new byte[1 + ((1 + pdu.AddressLength) >> 1)];
+                        for (int p = 0; p < pdu._phoneNumber.Length; p++)
+                            pdu._phoneNumber[p] = qu.Dequeue();
+                        pdu.PhoneNumber = AsNumber(pdu._phoneNumber);
+                        pdu.ProtocolID = qu.Dequeue();
+                        pdu.DataCoding = qu.Dequeue();
+                        if (0x10 == (0x18 & pdu.FirstOctet))
+                        {
+                            pdu.ValidityPeriod = qu.Dequeue();
+                        }
+                        else if (0 != (0x18 & pdu.FirstOctet))
+                        {
+                            pdu._scTimeStamp = new byte[6];
+                            for (int t = 0; t < 6; t++)
+                                pdu._scTimeStamp[t] = qu.Dequeue();
+                            pdu.TimeZone = TimeZone(qu.Dequeue());
+                            if (0x18 == (0x18 & pdu.FirstOctet))
+                                pdu.SCTimeStamp = AsDate(pdu._scTimeStamp);
+                        }
+                        if (null == pdu.SCTimeStamp) pdu.SCTimeStamp = string.Empty;
+                        pdu.UserDataLength = qu.Dequeue();
+                        pdu._userData = new byte[pdu.UserDataLength];
+                        for (int u = 0; u < pdu._userData.Length && 0 < qu.Count; u++)
+                            pdu._userData[u] = qu.Dequeue();
+                        switch (0x0c & pdu.DataCoding)
+                        {
+                            case 0: //7-bit text
+                                pdu.UserData = Decode7bit(pdu._userData, 0, pdu.UserDataLength);
+                                break;
+                            case 4: //8-bit data
+                                pdu.UserData = BytesToHex(pdu._userData).Insert(0, "0x");
+                                break;
+                            case 8: //16-bit ucs2
+                                pdu.UserData = Encoding.BigEndianUnicode.GetString(pdu._userData);
+                                break;
+                        }
+                    }
+                    else if (0 == (0x03 & pdu.FirstOctet)) //deliver
+                    {
+                        pdu.AddressLength = qu.Dequeue();
+                        pdu._phoneNumber = new byte[1 + ((1 + pdu.AddressLength) >> 1)];
+                        for (int q = 0; q < pdu._phoneNumber.Length; q++)
+                            pdu._phoneNumber[q] = qu.Dequeue();
+                        pdu.PhoneNumber = AsNumber(pdu._phoneNumber);
+                        pdu.ProtocolID = qu.Dequeue();
+                        pdu.DataCoding = qu.Dequeue();
+                        pdu._scTimeStamp = new byte[6];
+                        for (int s = 0; s < 6; s++)
+                            pdu._scTimeStamp[s] = qu.Dequeue();
+                        pdu.SCTimeStamp = AsDate(pdu._scTimeStamp);
+                        pdu.TimeZone = TimeZone(qu.Dequeue());
+
+                        pdu.UserDataLength = qu.Dequeue();
+                        pdu._userData = new byte[pdu.UserDataLength];
+                        for (int v = 0; v < pdu._userData.Length && 0 < qu.Count; v++)
+                            pdu._userData[v] = qu.Dequeue();
+
+                        switch (0x0c & pdu.DataCoding)
+                        {
+                            case 0: //7-bit text
+                                pdu.UserData = Decode7bit(pdu._userData, 0, pdu.UserDataLength);
+                                break;
+                            case 4: //8-bit data
+                                pdu.UserData = BytesToHex(pdu._userData).Insert(0, "0x");
+                                break;
+                            case 8: //16-bit ucs2
+                                pdu.UserData = Encoding.BigEndianUnicode.GetString(pdu._userData);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        //exception
+                    }
+                    AppendOutput("{0,2}) {1,-17}[{2} {3}] {4}\r\n{5}\r\n{6}", y, pdu.PhoneNumber, pdu.SCTimeStamp, pdu.TimeZone, (
+                        0 == status ? "刪除" :
+                        1 == status ? "已讀" :
+                        3 == status ? "未讀" :
+                        7 == status ? "待送" :
+                        5 == status ? "送出" : ""), pdu.UserData, "".PadLeft(40, '-'));
+                }
+                //if (1 <= y && 9 >= y)
+                //{
+                //    RecvBuffer[0] = 0;
+                //    UpdateRecordSIM(y, BytesToHex(RecvBuffer));
+                //    //break;
+                //}
+            }
+            AppendOutput();
+            #endregion
+        //MSISDN:
+            #region --- EF 6F40 MSISDN
+            SIM.EF MSISDN = ReadEFSIM(0x6F40);
+            AppendOutput("[6F40]本機號碼(容量{0})\r\n\r\n序) {1,-20}姓名\r\n{2}", MSISDN.RecordCount, "電話號碼", "".PadLeft(40, '-'));
+            int msisdnlen = MSISDN.RecordLength - 14;
+            for (int d = 1; d <= MSISDN.RecordCount; d++)
+            {
+                RecvBuffer = MSISDN[d];
+                if (0xff == (RecvBuffer[0] & RecvBuffer[msisdnlen]))  //空
+                {
+                    //AppendOutput("{0,2})", d);
+                    //continue;
+                }
+                else
+                {
+                    int numlen = RecvBuffer[msisdnlen];
+                    byte[] lname = new byte[msisdnlen];
+                    byte[] lnumber = new byte[numlen];
+                    Array.Copy(RecvBuffer, lname, msisdnlen);
+                    Array.Copy(RecvBuffer, 1 + msisdnlen, lnumber, 0, numlen);
+                    AppendOutput("{0,2}) {1,-24}{2}", d, AsNumber(lnumber), AsName(lname));
+                }
+            }
+            AppendOutput("{0}\r\n", "".PadLeft(40, '-'));
+            //UpdateRecordSIM(1, "".PadLeft(2 * MSISDN.RecordLength, 'F')); //清空
+            #endregion
+            #endregion
+
+        FINE: ;
+        }
+        #endregion
+
+        #region ---- TransmitSIM() ----
+        public static SIM.EF ReadEFSIM(int efid)
+        {
+            SIM.EF ef = new SIM.EF(SelectSIM(efid));
+            if (0 == RecvBuffer[6])  //transparent
+                ef[0] = ReadBinarySIM(ef.RecordLength);
+            else  //linear fixed or cyclic
+                for (int recno = 1; recno <= ef.RecordCount; recno++)
+                {
+                    ef[recno] = ReadRecordSIM(recno, ef.RecordLength);
+                    Console.Write("{0}/{1}\r", recno, ef.RecordCount);
+                }
+            return ef;
+        }
+
+        public static byte[] SelectSIM(int efid)
+        {
+            TransmitSIM("A0A4000002" + efid.ToString("X4"), true);
+            return RecvBuffer;
+        }
+
+        public static byte[] GetStatusSIM(int len)
+        {
+            TransmitSIM("A0C00000" + len.ToString("X2"), false);
+            return RecvBuffer;
+        }
+
+        private static byte[] ReadBinarySIM(int len)
+        {
+            TransmitSIM("A0B00000" + len.ToString("X2"), false);
+            return RecvBuffer;
+        }
+
+        private static byte[] ReadNextSIM(int len)
+        {
+            TransmitSIM("A0B20002" + len.ToString("X2"), false);
+            return RecvBuffer;
+        }
+
+        private static byte[] ReadRecordSIM(int num, int len)
+        {
+            TransmitSIM("A0B2" + num.ToString("X2") + "04" + len.ToString("X2"), false);
+            return RecvBuffer;
+        }
+
+        private static void UpdateRecordSIM(int num, string data)
+        {
+            data = Regex.Replace(data, "[^0-9A-F]", "", RegexOptions.IgnoreCase);
+            AppendOutput("A0DC" + num.ToString("X2") + "04" + (data.Length >> 1).ToString("X2") + data);
+            TransmitSIM("A0DC" + num.ToString("X2") + "04" + (data.Length >> 1).ToString("X2") + data, false);
+        }
+
+        private static string PinWithPad(string pin)
+        {
+            return Regex.Replace(BytesToHex(Encoding.Default.GetBytes(pin)),
+                "[^0-9A-F]", "", RegexOptions.IgnoreCase).PadRight(16, 'F');
+        }
+
+        private static bool VerifyCHV(string pin)
+        {
+            TransmitSIM("A020000108" + PinWithPad(pin), false);
+            bool chvok = (0x9000 == SW12);
+            AppendOutput("Verify CHV {0} ({1:X4})\r\n", (chvok ? "ok" : "failure"), SW12);
+            return chvok;
+        }
+
+        private static bool DisableCHV(string pin)
+        {
+            TransmitSIM("A026000108" + PinWithPad(pin), false);
+            bool chvok = (0x9000 == SW12);
+            AppendOutput("Disable CHV {0} ({1:X4})\r\n", (chvok ? "ok" : "failure"), SW12);
+            return chvok;
+        }
+
+        private static bool EnableCHV(string pin)
+        {
+            TransmitSIM("A028000108" + PinWithPad(pin), false);
+            bool chvok = (0x9000 == SW12);
+            AppendOutput("Enable CHV {0} ({1:X4})\r\n", (chvok ? "ok" : "failure"), SW12);
+            return chvok;
+        }
+
+        private static bool ChangeCHV(string oldpin, string newpin)
+        {
+            TransmitSIM("A024000110" + PinWithPad(oldpin) + PinWithPad(newpin), false);
+            bool chvok = (0x9000 == SW12);
+            AppendOutput("Change CHV {0} ({1:X4})\r\n", (chvok ? "ok" : "failure"), SW12);
+            return chvok;
+        }
+
+        private static bool UnblockCHV(string puk, string newpin)
+        {
+            TransmitSIM("A02C000010" + PinWithPad(puk) + PinWithPad(newpin), false);
+            bool chvok = (0x9000 == SW12);
+            AppendOutput("Unblock CHV {0} ({1:X4})\r\n", (chvok ? "ok" : "failure"), SW12);
+            return chvok;
+        }
+        #endregion
+
+        #region ---- GSM SIM functions ----
+        //電話簿姓名 本文檔最後面有參考資料
+        public static string AsName(byte[] mbytes)
+        {
+            string nam = string.Empty;
+            if (null == mbytes) return nam;
+            int newlen, chrcode, pos = 0;
+            switch (chrcode = mbytes[pos++])
+            {
+                case 0x82:
+                case 0x81:
+                    StringBuilder namstr = new StringBuilder();
+                    newlen = mbytes[pos++];
+                    int baseptr = (0x82 == chrcode ? ((mbytes[pos++] << 8) | mbytes[pos++]) : (mbytes[pos++] << 7));
+                    for (; newlen > 0; ++pos, --newlen)
+                    {
+                        if (0 != (0x80 & (chrcode = mbytes[pos])))
+                            chrcode = (chrcode & 0x7f) + baseptr;
+                        namstr.Append(char.ConvertFromUtf32(chrcode));
+                    }
+                    nam = namstr.ToString();
+                    break;
+                case 0x80:
+                    Queue<byte> bq = new Queue<byte>(mbytes);
+                    bq.Dequeue();
+                    nam = Encoding.BigEndianUnicode.GetString(bq.ToArray()).TrimEnd('\uffff', '\ufffd');
+                    break;
+                default:
+                    nam = Encoding.UTF7.GetString(mbytes).TrimEnd('\xff');
+                    break;
+            }
+            return nam;
+        }
+        //電話簿號碼
+        public static string AsNumber(byte[] nbytes)
+        {
+            string num = string.Empty;
+            string intl = string.Empty;
+            if ((null == nbytes) || (0 == nbytes.Length) || (0xff == nbytes[0]))
+                return num;
+            if (0 != (0x10 & nbytes[0])) intl = "+";
+            num = UnpackBCD(nbytes, 1, nbytes.Length - 1);
+            return num.Insert(0, intl);
+        }
+        //拆解簡訊日期
+        public static string AsDate(byte[] dbytes)
+        {
+            string dat = string.Empty;
+            if (null == dbytes) return dat;
+            try
+            {
+                dat = UnpackBCD(dbytes);
+                if (!string.IsNullOrEmpty(dat))
+                    dat = string.Concat("20", dat.Insert(10, ":").Insert(8, ":").Insert(6, " ").Insert(4, "-").Insert(2, "-"));
+            }
+            finally { }
+            return dat;
+        }
+        public static string TimeZone(byte tzbyte)
+        {
+            string timezone = "GMT";
+            bool tzpositive = (0 == (0x80 & tzbyte));
+            tzbyte = (byte)(tzbyte << 4 | (0x70 & tzbyte) >> 4);
+            int tzoffset = int.Parse(tzbyte.ToString("X2")) >> 2;
+            if (0 != tzoffset)
+                timezone += (tzpositive ? "+" : "-") + tzoffset.ToString();
+            return timezone;
+        }
+        //
+        public static string UnpackBCD(byte[] bbytes, int start, int length)
+        {
+            string bcd = string.Empty;
+            if (null == bbytes) return bcd;
+            int digit, end = start + length;
+            if (end > bbytes.Length) end = bbytes.Length;
+            for (int n = start, m = 0; n < end; n += m, m ^= 1)
+            {
+                digit = 0x0f & (bbytes[n] >> (m << 2));
+                if (0x0f == digit) break;
+                bcd += (
+                    0x0e == digit || 0x0d == digit ? "" :
+                    0x0c == digit ? "p" :
+                    0x0b == digit ? "#" :
+                    0x0a == digit ? "*" :
+                    digit.ToString("X"));
+            }
+            return bcd;
+        }
+
+        public static string UnpackBCD(byte[] bbytes, int length)
+        {
+            return UnpackBCD(bbytes, 0, length);
+        }
+
+        public static string UnpackBCD(byte[] bbytes)
+        {
+            return UnpackBCD(bbytes, 0, bbytes.Length);
+        }
+        //IMSI前五碼
+        public static string Telecom(string imsi)
+        {
+            string[] telecoms = new string[] {
+                "46601 Far EasTone 遠傳電信",
+                "46606 TUNTEX 東榮電信",
+                "46688 KGT 和信電信",
+                "46692 Chunghwa 中華電信",
+                "46693 MobiTai 東信電信",
+                "46697 TWN GSM 台灣大哥大",
+                "46699 TransAsia 泛亞電信"};
+            string tele = Array.Find<string>(telecoms, delegate(string item)
+            {
+                return item.StartsWith(imsi.Substring(0, 5));
+            });
+            return (null == tele ? "" : tele.Substring(6));
+        }
+        #endregion
+
+        #region **** 讀健保卡 ****
+        private static void NHI()
+        {
+            TransmitAPDU("00A4040010D1580000010000000000000000001100", false);
+            TransmitAPDU("00CA1100020000", false);
+            AppendOutput(@"卡　號: {0}
+姓　名: {1}
+身份證: {2}
+生　日: {3}
+性　別: {4}
+發卡日: {5}
+",
+                Encoding.Default.GetString(RecvBuffer, 0, 12),
+                Encoding.Default.GetString(RecvBuffer, 12, 20),
+                Encoding.Default.GetString(RecvBuffer, 32, 10),
+                Encoding.Default.GetString(RecvBuffer, 42, 7).Insert(5, "/").Insert(3, "/"),
+                Encoding.Default.GetString(RecvBuffer, 49, 1),
+                Encoding.Default.GetString(RecvBuffer, 50, 7).Insert(5, "/").Insert(3, "/"));
+        }
+        #endregion
+
+        #region **** 讀自然人憑證 ****
+        private static byte[] CDC()
+        {
+            bool EOF;
+            int readlen = 250;
+            TransmitAPDU("00A4020C02FE14", false);
+            //ReadBinary
+            TransmitAPDU("00B0000010", false);
+            AppendOutput("卡號 {0}\r\n", Encoding.Default.GetString(RecvBuffer));
+            //goto CDC_DF;
+            for (int j = 0x14; j <= 0x17; j++)
+            {
+                TransmitAPDU("00A4020C02FE" + j.ToString("X2"), false);
+                Certificate = new byte[1500];
+                for (CertLength = 0, EOF = false; CertLength < 1500 && !EOF; CertLength += RecvBuffer.Length)
+                {
+                    TransmitAPDU("00B0" + CertLength.ToString("X4") + readlen.ToString("X2"), false);
+                    if (RecvBuffer.Length == 0) break;
+                    else Array.Copy(RecvBuffer, 0, Certificate, CertLength, RecvBuffer.Length);
+                    EOF = (RecvBuffer.Length < readlen);
+                }
+                if (CertLength > 0)
+                    AppendOutput("[FE{0:X2}] length={1}\r\n{2}\r\n", j, CertLength, BytesToHex(Certificate, CertLength));
+            }
+            //goto CDC_END;
+        //CDC_DF:
+            //SelectDF
+            TransmitAPDU("00A4040C0CA000000063504B43532D3135", false);
+            //VerifyPIN
+            //TransmitAPDU("00200082083132333435362020", false);
+            //ChangePIN
+            //TransmitAPDU("002400821031323334353620203334353631322020", false);
+            //4604:憑證內容
+            TransmitAPDU("00A4020C024604", false);
+            Certificate = new byte[1500];
+            for (CertLength = 0, EOF = false; CertLength < 1500 && !EOF; CertLength += RecvBuffer.Length)
+            {
+                TransmitAPDU("00B0" + CertLength.ToString("X4") + readlen.ToString("X2"), false);
+                if (RecvBuffer.Length == 0) break;
+                else Array.Copy(RecvBuffer, 0, Certificate, CertLength, RecvBuffer.Length);
+                EOF = (RecvBuffer.Length < readlen);
+            }
+            while (Certificate[CertLength - 1] == 0xff) --CertLength; // 去掉後面的FF
+            if (CertLength > 0)
+                AppendOutput("[4604] length={0}\r\n{1}\r\n", CertLength, BytesToHex(Certificate, CertLength));
+            //File.WriteAllBytes(@"E:\GPKI.cer", Certificate);
+        //CDC_END: ;
+            return Certificate;
+        }
+
+        public struct tm
+        {
+            public int _sec;
+            public int _min;
+            public int _hour;
+            public int _mday;
+            public int _mon;
+            public int _year;
+            public int _wday;
+            public int _yday;
+            public int _isdst;
+        }
+
+        public struct CertBasicStruct
+        {
+            public byte* pTbsCertificate;
+            public int iTbsCertificateLength;
+            public byte* pSignatureAlgorithm;
+            public int iSignatureAlgorithmLength;
+            public byte* pSignature;
+            public int iSignatureLength;
+        }
+
+        public struct CertInfoStruct
+        {
+            public fixed byte ucSerialnumber[40];
+            public int iSerialnumberLength;
+            public fixed byte ucIssuerDN[256];
+            public int iIssuerDNLength;
+            public fixed byte ucSubjectDN[256];
+            public int iSubjectDNLength;
+            public tm BeginDate;
+            public tm EndDate;
+            public fixed byte ucExtension[1024];
+            public int iExtensionLength;
+        }
+        #endregion
+
+        #region **** 變數宣告 ****
+        public static SCARD_IO_REQUEST SendPci;
+        public static SCARD_IO_REQUEST RecvPci;
+        public static SCARD_READERSTATE[] readerState = null;
+        public static string[] ReaderList = null;
+        public static byte[] RecvBuffer = null;
+        public static uint RecvLength = 0;
+        public static uint ContextHandle = 0, CardHandle = 0;
+        public static int ErrorCode = 0, SW12 = 0;
+        public static byte SW1 = 0, SW2 = 0;
+        public static bool IsFISC2 = false, IsDebugMode = false; //顯示APDU傳送及回應的詳細內容
+        public static int nReaders = 1, iReader = -1;
+
+        public static uint[] SubjectDirectoryAttribute_OID = { 2, 5, 29, 9 };
+        public static uint[] SubjectAltName_OID = { 2, 5, 29, 17 };
+        public static uint[] SubjectKeyIdentifier_OID = { 2, 5, 29, 14 };
+        // 中華電信定的
+        public static uint[] SubjectType_OID = { 2, 16, 886, 1, 100, 2, 1 };
+        public static uint[] CardHolderRank_OID = { 2, 16, 886, 1, 100, 2, 2 };
+        public static uint[] TailOfCitizenID_OID = { 2, 16, 886, 1, 100, 2, 51 };
+        public static uint[] UniformOrganization_OID = { 2, 16, 886, 1, 100, 2, 101 };
+        public static uint[] GovernmentOrganization_OID = { 2, 16, 886, 1, 100, 2, 102 };
+
+        public static string sReaderName = null;  //"CASTLES EZ100PU 0";
+        public static int iCertID = 1, iReturn = 0, CertLength = 0;
+        public static byte[] Certificate = null;
+        #endregion
+
+        private static void AppendOutput(string format, params object[] items)
+        {
+            Console.WriteLine(format, items);
+        }
+        private static void AppendOutput()
+        {
+            Console.WriteLine();
+        }
+
+        #region #### Main() ####
+        public unsafe static void Main(string[] args)
+        {
+            SendPci.cbPciLength = 8;
+            RecvPci.cbPciLength = 8;
+            CertBasicStruct CertStruct = new CertBasicStruct();
+            CertInfoStruct CertInfo = new CertInfoStruct();
+            if (args.Length > 0) IsDebugMode = (args[0].ToLower().CompareTo("/debug") == 0);
+            try
+            {
+                //建立 Smart Card API
+                ErrorCode = SCardEstablishContext(SCARD_SCOPE_USER, IntPtr.Zero, IntPtr.Zero, ref ContextHandle);
+                CheckCode(ErrorCode);
+                //string[] CardList = ListCards();
+                //AppendOutput(string.Join("\r\n", CardList));
+                ReaderList = ListReaders();
+                //AppendOutput("讀卡機={0}\r\n", string.Join("/", ReaderList));
+
+                nReaders = ReaderList.Length;
+                readerState = new SCARD_READERSTATE[nReaders];
+
+                while (true)
+                {
+                    Console.Write("(命令列加參數 /debug 可顯示 rawdata)\r\n");
+                    Console.Write("================================\r\n");
+                    Console.Write("[1] FISC II - 晶片金融卡\r\n");
+                    Console.Write("[2] GSM SIM - 手機SIM卡\r\n");
+                    Console.Write("[3] NHI     - 全民健保卡\r\n");
+                    Console.Write("[4] CDC     - 自然人憑證\r\n");
+                    Console.Write("[Q] Quit    - 結束跳出\r\n");
+                    Console.Write("================================\r\n");
+                    Console.Write("請選擇卡片種類(1-4): ");
+                    ConsoleKeyInfo cki = Console.ReadKey(false);
+                    Console.Write("\r\n\r\n");
+                    if (cki.Key == ConsoleKey.Q) break;
+                    bool isValidKey = false;
+                    switch (cki.Key)
+                    {
+                        case ConsoleKey.NumPad1:
+                        case ConsoleKey.D1:
+                        case ConsoleKey.NumPad2:
+                        case ConsoleKey.D2:
+                        case ConsoleKey.NumPad3:
+                        case ConsoleKey.D3:
+                        case ConsoleKey.NumPad4:
+                        case ConsoleKey.D4:
+                            isValidKey = true;
+                            break;
+                    }
+                    if (!isValidKey) continue;
+                    uint eventState = SCARD_STATE_UNAWARE;
+                    iReader = -1;
+                    for (int i = 0; (i < nReaders) && (iReader < 0); i++)
+                    {
+                        readerState[i].szReader = ReaderList[i];
+                        readerState[i].dwCurrentState = SCARD_STATE_UNAWARE;
+                        ErrorCode = SCardGetStatusChange(ContextHandle, 0, readerState, 1);
+                        if (ErrorCode != 0) continue;
+                        eventState = readerState[i].dwEventState;
+                        readerState[i].dwCurrentState = eventState;
+                        AppendOutput("{0}\r\n{1}\r\n", ReaderList[i], (
+                            0 != (SCARD_STATE_EMPTY & eventState) ? "(card removed)" :
+                            0 != (SCARD_STATE_PRESENT & eventState) ? "ATR=" + BytesToHex(readerState[i].rgbAtr, (int)readerState[i].cbAtr) :
+                            "")/*, (uint)eventState*/);
+                        if ((iReader < 0) && (0 != (SCARD_STATE_PRESENT & eventState)))
+                            iReader = i;
+                    }
+                    if (iReader < 0) throw new Exception("");
+
+                    ConnectCard();
+                    switch (cki.Key)
+                    {
+                        case ConsoleKey.NumPad1:
+                        case ConsoleKey.D1:
+                            FISC_II(); //金融卡
+                            //GenerateRandom();
+                            //驗證密碼
+                            //VerifyPIN("999999");
+                            break;
+                        case ConsoleKey.NumPad2:
+                        case ConsoleKey.D2:
+                            GSM_SIM(); //SIM卡通訊錄和簡訊
+                            break;
+                        case ConsoleKey.NumPad3:
+                        case ConsoleKey.D3:
+                            NHI(); //健保卡
+                            break;
+                        case ConsoleKey.NumPad4:
+                        case ConsoleKey.D4:
+                            CDC(); //自然人憑證
+                            fixed (byte* ppCert = Certificate)
+                                iReturn = DecodeCertificate(ppCert, CertLength, &CertStruct);
+                            iReturn = GetCertInfo(&CertStruct, &CertInfo);
+                            AppendOutput("憑證期限 {0:d4}/{1:d2}/{2:d2} - {3:d4}/{4:d2}/{5:d2}",
+                                1900 + CertInfo.BeginDate._year, 1 + CertInfo.BeginDate._mon, CertInfo.BeginDate._mday,
+                                1900 + CertInfo.EndDate._year, 1 + CertInfo.EndDate._mon, CertInfo.EndDate._mday);
+
+                            byte[] dn = new byte[CertInfo.iIssuerDNLength];
+                            for (int di = 0; di < CertInfo.iIssuerDNLength; di++)
+                                dn[di] = CertInfo.ucIssuerDN[di];
+                            string issuerdn = Encoding.UTF8.GetString(dn);
+                            AppendOutput(issuerdn);
+
+                            byte[] su = new byte[CertInfo.iSubjectDNLength];
+                            for (int si = 0; si < CertInfo.iSubjectDNLength; si++)
+                                su[si] = CertInfo.ucSubjectDN[si];
+                            string subjectdn = Encoding.UTF8.GetString(su);
+                            AppendOutput(subjectdn);
+                            AppendOutput();
+                            //sw.Close();
+                            break;
+                    }
+                    DisconnectCard();
+                }
+            }
+            catch (Exception ex)
+            {
+                //foreach (DictionaryEntry dt in ex.Data)
+                //{
+                //    AppendOutput("{0}={1}", dt.Key, dt.Value);
+                //}
+                Console.WriteLine("{0}", ex.Message);
+                Console.Write("請敲任意鍵 ");
+                Console.ReadKey(true);
+            }
+            finally
+            {
+                SCardReleaseContext(ContextHandle);
+            }
+        }
+        #endregion
+    }
+
+    #region **** SIM卡檔案結構 ****
+    public static class SIM
+    {
+        public struct DF
+        {
+            int Size;
+            int Id;
+            bool CHVDisabled;
+            int DFs;
+            int EFs;
+            int PIN1Attempts;
+            int PUK1Attempts;
+            public DF(byte[] buffer)
+            {
+                this.Size = ((buffer[2] << 8) | buffer[3]);
+                this.Id = ((buffer[4] << 8) | buffer[5]);
+                this.CHVDisabled = (0 != (0x80 & buffer[13]));
+                this.DFs = buffer[14];
+                this.EFs = buffer[15];
+                this.PIN1Attempts = (0x0f & buffer[18]);
+                this.PUK1Attempts = (0x0f & buffer[19]);
+            }
+        }
+
+        public struct EF
+        {
+            int Size;
+            int Id;
+            int Type; //byte13:00=transparent,01=linear fixed,03=cyclic
+            int RecLen;
+            byte[] Record;
+            int Current;
+            bool EOF;
+            internal EF(byte[] buffer)
+            {
+                this.Size = ((buffer[2] << 8) | buffer[3]);
+                this.Id = ((buffer[4] << 8) | buffer[5]);
+                this.Type = buffer[13];
+                this.RecLen = buffer[14];
+                this.Record = new byte[Size];
+                this.Current = 0;
+                this.EOF = false;
+            }
+            internal byte[] this[int index]
+            {
+                get
+                {
+                    if ((index <= 0) || (index > this.RecordCount)) return null;
+                    byte[] rbytes = new byte[RecLen];
+                    this.Current = index;
+                    Array.ConstrainedCopy(this.Record, --index * RecLen, rbytes, 0, this.RecLen);
+                    return rbytes;
+                }
+                set
+                {
+                    if ((index <= 0) || (index > this.RecordCount)) return;
+                    //this.Current = index;
+                    Array.ConstrainedCopy(value, 0, this.Record, --index * RecLen, value.Length);
+                }
+            }
+            internal int RecordCount
+            {
+                get { return ((this.RecLen == 0) ? 0 : (this.Size / this.RecLen)); }
+            }
+            internal int RecordLength
+            {
+                get { return this.RecLen; }
+            }
+            internal byte[] CurrentRecord
+            {
+                get { return this[this.Current]; }
+                set { this[this.Current] = value; }
+            }
+            internal byte[] NextRecord
+            {
+                get
+                {
+                    if (this.EOF = (this.Current >= this.RecordCount)) return null;
+                    return this[++this.Current];
+                }
+            }
+            //拆解電話簿姓名
+            internal string ParseName(int index, int len)
+            {
+                string name = string.Empty;
+                int newlen, chrcode, pos = 0;
+                byte[] record = new byte[len];
+                Array.Copy(this.CurrentRecord, index, record, 0, len);
+                switch (chrcode = record[pos++])
+                {
+                    case 0x82:
+                    case 0x81:
+                        StringBuilder namstr = new StringBuilder();
+                        newlen = record[pos++];
+                        int baseptr = (0x82 == chrcode ? (record[pos++] << 8 | record[pos++]) : record[pos++] << 7);
+                        for (; newlen > 0; ++pos, --newlen)
+                        {
+                            if (0 != (0x80 & (chrcode = record[pos])))
+                                chrcode = (chrcode & 0x7f) + baseptr;
+                            namstr.Append(char.ConvertFromUtf32(chrcode));
+                        }
+                        name = namstr.ToString();
+                        break;
+                    case 0x80:
+                        Queue<byte> bq = new Queue<byte>(record);
+                        bq.Dequeue();
+                        name = Encoding.BigEndianUnicode.GetString(bq.ToArray()).TrimEnd('\uffff', '\ufffd');
+                        break;
+                    default:
+                        name = Encoding.UTF7.GetString(record).TrimEnd('\xff');
+                        break;
+                }
+                return name;
+            }
+            //拆解電話簿號碼
+            internal string ParseNumber(int pos, int len)
+            {
+                string number = string.Empty;
+                string intl = string.Empty;
+                if (0xff == this.CurrentRecord[pos]) return number;
+                if (0 != (0x10 & this.CurrentRecord[pos])) intl = "+";
+                number = SmartSpy.UnpackBCD(this.CurrentRecord, ++pos, --len);
+                return number.Insert(0, intl);
+            }
+            internal string ParseDate(int pos, int len)
+            {
+                byte[] dbytes = new byte[len];
+                Array.Copy(this.CurrentRecord, pos, dbytes, 0, len);
+                return "20" + SmartSpy.UnpackBCD(dbytes).Insert(10, ":").Insert(8, ":").Insert(6, " ").Insert(4, "/").Insert(2, "/");
+            }
+            //拆解7bit編碼
+            internal string Decode7bit(int pos, int len)
+            {
+                byte[] bytes = this.CurrentRecord;
+                if (0 >= len || pos >= bytes.Length) return string.Empty;
+                StringBuilder s = new StringBuilder(len);
+                int b = 0, c = 0, k = 0;
+                for (int i = pos; i < bytes.Length && s.Length < len; i++)
+                {
+                    c = b | bytes[i] << k++;
+                    b = c >> 7;
+                    s.Append((char)(0x7f & c));
+                    if (7 == k)
+                    {
+                        s.Append((char)b);
+                        k = b = 0;
+                    }
+                }
+                return s.ToString();
+            }
+            //組合7bit編碼
+            internal byte[] Encode7bit(string val)
+            {
+                if (string.IsNullOrEmpty(val)) return null;
+                List<byte> s = new List<byte>(val.Length);
+                int c = 0, k = 0, j = 0;
+                for (int i = 0; i < val.Length; i++)
+                {
+                    c = val[i];
+                    if (0 != (k = i & 7))
+                        s[j++] |= (byte)((c & ~(~0 << k)) << (8 - k));
+                    if (7 != k)
+                        s.Add((byte)(c >> k));
+                }
+                return s.ToArray();
+            }
+        }
+
+        public struct SMSPDU
+        {
+            public byte SMSCLength; //eg.07(bytes,含SMSCTypeofAddress)
+            public byte[] SMSCNumberBytes; //eg.91 88 96 23 04 80 12=+886932400821
+            public string SMSCNumber;
+
+            //The first octet of the SMS-SUBMIT PDU has the following layout:
+            //Bit no 7     6       5      4      3      2     1      0
+            //Name   TP-RP TP-UDHI TP-SRR TP-VPF TP-VPF TP-RD TP-MTI TP-MTI
+            //where the fields have the following meaning:
+            //Fieldname Meaning
+            //TP-RP Reply path. Parameter indicating that reply path exists.
+            //TP-UDHI User data header indicator. This bit is set to 1 if the User Data field starts with a header
+            //TP-SRR Status report request. This bit is set to 1 if a status report is requested
+            //TP-VPF Validity Period Format. Bit4 and Bit3 specify the TP-VP field according to this table:
+            //bit4 bit3
+            //0 0 : TP-VP field not present
+            //1 0 : TP-VP field present. Relative format (one octet)
+            //0 1 : TP-VP field present. Enhanced format (7 octets)
+            //1 1 : TP-VP field present. Absolute format (7 octets)
+            //TP-RD Reject duplicates. Parameter indicating whether or not the SC shall accept an SMS-SUBMIT for an SM still held in the SC which has the same TP-MR and the same TP-DA as a previously submitted SM from the same OA.
+            //TP-MTI Message type indicator. Bits no 1 and 0 are set to 0 and 1 respectively to indicate that this PDU is an SMS-SUBMIT
+
+            //The first octet of the SMS-DELIVER PDU has the following layout:
+            //Bit no 7     6       5      4        3        2      1      0
+            //Name   TP-RP TP-UDHI TP-SRI (unused) (unused) TP-MMS TP-MTI TP-MTI
+            //where the fields have the following meaning:
+            // Name Meaning
+            //TP-RP Reply path. Parameter indicating that reply path exists.
+            //TP-UDHI User data header indicator. This bit is set to 1 if the User Data field starts with a header
+            //TP-SRI Status report indication. This bit is set to 1 if a status report is going to be returned to the SME
+            //TP-MMS More messages to send. This bit is set to 0 if there are more messages to send
+            //TP-MTI Message type indicator. Bits no 1 and 0 are both set to 0 to indicate that this PDU is an SMS-DELIVER
+            public byte FirstOctet; //eg.11=SUBMIT & Relative TP-VP/04=DELIVER & no more messages/24=status report requested
+            public byte MessageReference; //eg.00 DELIVER無此值
+            public byte AddressLength; //eg.0C=電話號碼長度(octets,不含TypeofAddress)
+            public byte[] _phoneNumber; //eg.91 88 96 55 80 78 77=+886955088777
+            public string PhoneNumber;
+            public byte ProtocolID; //eg.00
+            public byte DataCoding; //eg.00=7bit/08=UCS2
+            //Year Month Day Hour Minute Second TimeZone <-- bit3=0:positive,1:negative
+            public byte[] _scTimeStamp; //eg.60 20 02 71 02 22 23=2006-02-20 17:20:22 GMT+8(32*15min)
+            public string SCTimeStamp;
+            public string TimeZone;
+            public byte ValidityPeriod; //eg.AA=4days
+            public byte UserDataLength; //in bytes
+            public byte[] _userData; //the message
+            public string UserData;
+            public System.Collections.BitArray bits;
+
+            public byte[] Finalize(bool withsmsc)
+            {
+                bool isdeliver = (0 == (0x01 & this.FirstOctet));
+                List<byte> fin = new List<byte>();
+                fin.Add(this.SMSCLength);
+                if (0 != this.SMSCLength)
+                    fin.AddRange(this.SMSCNumberBytes);
+                fin.Add(this.FirstOctet);
+                if (!isdeliver)
+                    fin.Add(this.MessageReference);
+                fin.Add(this.AddressLength);
+                fin.AddRange(this._phoneNumber);
+                fin.Add(this.ProtocolID);
+                fin.Add(this.DataCoding);
+                if (isdeliver)
+                    fin.AddRange(this._scTimeStamp);
+                else
+                    fin.Add(this.ValidityPeriod);
+                fin.Add(this.UserDataLength);
+                if (null != this._userData)
+                    fin.AddRange(this._userData);
+                return fin.ToArray();
+            }
+        }
+
+        public static string[,] DFArch =
+        {
+            {"3F00","Root",""},
+            {"7F10","TELECOM",""},
+            {"7F20","GSM",""},
+            {"7F21","DCS",""},
+            {"7F22","IS-41",""},
+            {"7F23","FP-CTS",""},
+        };
+
+        public static string[,] EFArch =
+        {
+            //3F00
+            {"2FE2","ICCID","ICC identification"},
+            {"2F05","ELP","Extended Language preference"},
+            {"2FB4","",""},
+            {"2FB1","",""},
+            {"2F01","ATR","contain the extension to the ATR"},
+            {"2F00","DIR","application identifiers"},
+            //7F20/7F21
+            {"6F05","LP","Language preference"},
+            {"6F07","IMSI","IMSI"},
+            {"6F20","Kc","Ciphering key Kc"},
+            {"6F30","PLMNsel","PLMN selector"},
+            {"6F31","HPLMN","HPLMN search period"},
+            {"6F37","ACMmax","ACM maximum value"},
+            {"6F38","SST","SIM service table"},
+            {"6F39","ACM","Accumulated call meter"},
+            {"6F3E","GID1","Group identifier level 1"},
+            {"6F3F","GID2","Group identifier level 2"},
+            {"6F41","PUCT","PUCT"},
+            {"6F45","CBMI","CBMI"},
+            {"6F46","SPN","Service provider name"},
+            {"6F48","CBMID","CBMID"},
+            {"6F49","SDN","Service Dialling Numbers"},
+            {"6F74","BCCH","BCCH"},
+            {"6F78","ACC","Access control class"},
+            {"6F7B","FPLMN","Forbidden PLMNs"},
+            {"6F7E","LOCI","Location information"},
+            {"6FAD","AD","Administrative data"},
+            {"6FAE","PHASE","Phase identification"},
+            {"6FB1","VGCS",""},
+            {"6FB2","VGCSS",""},
+            {"6FB3","VBS",""},
+            {"6FB4","VBSS",""},
+            {"6FB5","eMLPP",""},
+            {"6FB6","AAeM",""},
+            {"6FB7","ECC",""},
+            {"6F50","CBMIR",""},
+            //7F10
+            {"6F3A","ADN","Abbreviated dialling numbers"},
+            {"6F3B","FDN","Fixed dialling numbers"},
+            {"6F3C","SMS","Short messages"},
+            {"6F3D","CCP","Capability configuration parameters"},
+            {"6F40","MSISDN","MSISDN storage"},
+            {"6F42","SMSP","SMS parameters"},
+            {"6F43","SMSS","SMS status"},
+            {"6F44","LND","Last number dialled"},
+            {"6F47","SMSR","Short message status reports"},
+            {"6F4A","EXT1","Extension 1"},
+            {"6F4B","EXT2","Extension 2"},
+            {"6F4C","EXT3","Extension 3"},
+            {"6F4D","BDN","Barred dialling numbers"},
+            {"6F4E","EXT4","Extension 4"},
+            {"6F51","NIA","Network's indication of alerting"},
+            {"6F52","KcGPRS","GPRS Ciphering key KcGPRS"},
+            {"6F53","LOCIGPRS","GPRS Location Information"},
+            {"6F54","SUME",""},
+            {"6F60","PLMNwAct",""},
+            {"6F61","OPLMNwAct",""},
+            {"6F62","HPLMNAct",""},
+            {"6F63","CPBCCH",""},
+            {"6F64","INVSCAN",""},
+            {"6F65","RPLMNAct",""},
+        };
+    }
+    #endregion
+}
+
+
+//(GSM 11.11 version 6.2.0 Release 1997) 105 TS 100 977 V6.2.0 (1999-05)
+//Annex B (normative):
+//Coding of Alpha fields in the SIM for UCS2
+
+
+//1) If the first octet in the alpha string is '80', then the remaining octets are
+//16 bit UCS2 characters, with the more significant octet (MSO) of the UCS2
+//character coded in the lower numbered octet of the alpha field, and the less
+//significant octet (LSO) of the UCS2 character is coded in the higher numbered
+//alpha field octet, i.e. octet 2 of the alpha field contains the more significant
+//octet (MSO) of the first UCS2 character, and octet 3 of the alpha field contains
+//the less significant octet (LSO) of the first UCS2 character (as shown below).
+//Unused octets shall be set to 'FF', and if the alpha field is an even number of
+//octets in length, then the last (unusable) octet shall be set to
+//'FF'.
+
+//Example 1
+//-----------------------------------------------------------------------
+//Octet 1 Octet 2 Octet 3 Octet 4 Octet 5 Octet 6 Octet 7 Octet 8 Octet 9
+//-----------------------------------------------------------------------
+//'80'    Ch1 MSO Ch1 LSO Ch2 MSO Ch2 LSO Ch3 MSO Ch3 LSO 'FF'    'FF'
+//-----------------------------------------------------------------------
+
+
+//2) If the first octet of the alpha string is set to '81', then the second octet
+//contains a value indicating the number of characters in the string, and the
+//third octet contains an 8 bit number which defines bits 15 to 8 of a 16 bit base
+//pointer, where bit 16 is set to zero, and bits 7 to 1 are also set to zero.
+//These sixteen bits constitute a base pointer to a "half-page" in the UCS2 code
+//space, to be used with some or all of the remaining octets in the string. The
+//fourth and subsequent octets in the string contain codings as follows; if bit 8
+//of the octet is set to zero, the remaining 7 bits of the octet contain a GSM
+//Default Alphabet character, whereas if bit 8 of the octet is set to one, then
+//the remaining seven bits are an offset value added to the 16 bit base pointer
+//defined earlier, and the resultant 16 bit value is a UCS2 code point, and
+//completely defines a UCS2 character.
+
+//Example 2
+//-----------------------------------------------------------------------
+//Octet 1 Octet 2 Octet 3 Octet 4 Octet 5 Octet 6 Octet 7 Octet 8 Octet 9
+//-----------------------------------------------------------------------
+//'81'    '05'    '13'    '53'    '95'    'A6'    'XX'    'FF'    'FF'
+//-----------------------------------------------------------------------
+
+//In the above example; - Octet 2 indicates there 5 characters in the string -
+//Octet 3 indicates bits 15 to 8 of the base pointer, and indicates a bit pattern
+//of 0hhh hhhh h000 0000 as the 16 bit base pointer number. Bengali characters for
+//example start at code position 0980 (0000 1001 1000 0000), which is indicated by
+//the coding '13' in octet 3 (shown by the italicised digits). - Octet 4 indicates
+//GSM Default Alphabet character '53', i.e. "S". - Octet 5 indicates a UCS2
+//character offset to the base pointer of '15', expressed in binary as follows 001
+//0101, which, when added to the base pointer value results in a sixteen bit value
+//of 0000 1001 1001 0101, i.e. '0995', which is the Bengali letter KA. Octet 8
+//contains the value 'FF', but as the string length is 5, this a valid character
+//in the string, where the bit pattern 111 1111 is added to the base pointer,
+//yielding a sixteen bit value of 0000 1001 1111 1111 for the
+//UCS2 character (i.e. '09FF').
+
+
+//3) If the first octet of the alpha string is set to '82', then the second octet
+//contains a value indicating the number of characters in the string, and the
+//third and fourth octets contain a 16 bit number which defines the complete 16
+//bit base pointer to a "half-page" in the UCS2 code space, for use with some or
+//all of the remaining octets in the string. The fifth and subsequent octets in
+//the string contain codings as follows; if bit 8 of the octet is set to zero, the
+//remaining 7 bits of the octet contain a GSM Default Alphabet character, whereas
+//if bit 8 of the octet is set to one, the remaining seven bits are an offset
+//value added to the base pointer defined in octets three and four, and
+//the resultant 16 bit value is a UCS2 code point, and defines a UCS2 character.
+
+//Example 3
+//-----------------------------------------------------------------------
+//Octet 1 Octet 2 Octet 3 Octet 4 Octet 5 Octet 6 Octet 7 Octet 8 Octet 9
+//-----------------------------------------------------------------------
+//'82'    '05'    '05'    '30'    '2D'    '82'    'D3'    '2D'    '31'
+//-----------------------------------------------------------------------
+
+//In the above example - Octet 2 indicates there are 5 characters in the string -
+//Octets 3 and 4 contain a sixteen bit base pointer number of '0530', pointing to
+//the first character of the Armenian character set. - Octet 5 contains a GSM
+//Default Alphabet character of '2D', which is a dash "-". - Octet 6 contains a
+//value '82', which indicates it is an offset of '02' added to the base pointer,
+//resulting in a UCS2 character code of '0532', which represents Armenian
+//character Capital BEN. - Octet 7 contains a value 'D3', an offset of '53', which
+//when added to the base pointer results in a UCS2 code point of '0583',
+//representing Armenian Character small PIWR.
+
+
+//GSM Phase1 系統參數
+//----------------------------------------
+//6F07    IMSI
+//6F20    Kc,n
+//6F30    PLMN Selector
+//6F38    Service Table
+//6F74    BCCH Information
+//6F78    Access Control Class
+//6F7B    Forbidden PLMNs
+//6F7E    Location information(TMSI,LAI,TMSI TIME,Location update status)
+//6FAD    Administrative Data
+//----------------------------------------
+//Service 1: PIN Disabling
+//Service 2: Abbreviated Dialling Numbers
+//Service 4: Short Message Storage
+//Service 6: Capability Configuration Parameters
+//Service 7: PLMN Selector
+//
+//Service 3,5,8 在 Phase 1 中不開放
+//
+//
+//GSM Phase1 電信業務
+//----------------------------------------
+//6F39    Charging Counter
+//6F3A    Abbreviated Dialling Numbers
+//6F3C    Short Message Storage
+//6F3D    Capability Configuration Parameters
+//----------------------------------------
+//
+//
+//GSM Phase2 系統參數
+//----------------------------------------
+//6F05    Language Preference
+//6F07    IMSI
+//6F20    Kc,n
+//6F30    PLMN Selector
+//6F31    HPLMN Search
+//6F38    Service Table
+//6F45    Cell Broadcast Message Identifier Selection
+//6F74    BCCH Information
+//6F78    Access Control Class
+//6F7E    Location information(TMSI,LAI,TMSI TIME,Location update status)
+//6FAD    Administrative Data
+//6FAE    Phase Identification
+//----------------------------------------
+//Service 9: MSISDN
+//Service 10: Extension 1 file
+//Service 12: Short Message Parameters
+//Service 13: Last Number Dialed
+//Service 14: Cell Broadcasting Message Identifier File
+//
+//Service 3,5,8,11 在 Phase2 中不開放, 6F78 接入控制採用低級等級
+//
+//
+//GSM Phase2 電信業務
+//----------------------------------------
+//6F3A    Abbreviated Dialling Numbers
+//6F3C    Short Message Storage
+//6F3D    Capability Configuration Parameters
+//6D40    MSISDN
+//6F42    SMS Parameters
+//6F43    SMS Status
+//6F44    Last Number Dialed
+//6F4A    Extension 1 File
+//
+//
+//名詞解釋
+//----------------------------------------
+//BCCH    Broadcast Control Channels
+//IMEI    International Mobile Equipment Identity
+//IMSI    International Mobile Subscriber Identity
+//Kc      Ciphering key
+//n       Ciphering key sequence number
+//MSISDN  Mobile Station ISDN
+//PLMN    Public Land Mobile-communication Network
+//TMSI    Temporary Mobile Subscriber Identity
+//LAI     Location Area Information

@@ -1,0 +1,25 @@
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Data;
+using WayneEntity;
+
+/// <summary>
+/// LocationSettingB 的摘要描述
+/// </summary>
+public class LocationSettingCL
+{
+    public string GetList<T>(List<T> list2,Dictionary<string, object> dict)
+    {
+        DataSet ds = MSDB.GetDataSet("ConnDB", "dbo.usp_ParameterM_xGetAgencyListByMany"
+                                        , dict);
+
+        List<AgencyInfoVM> list = new List<AgencyInfoVM>();
+        PageVM rtn = new PageVM();
+
+        EntityS.FillModel(list, ds.Tables[0]);
+        EntityS.FillModel(rtn, ds.Tables[1]);
+        rtn.message = list;
+
+        return JsonConvert.SerializeObject(rtn);
+    }
+}

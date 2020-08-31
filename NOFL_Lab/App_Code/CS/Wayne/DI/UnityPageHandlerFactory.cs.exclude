@@ -1,0 +1,56 @@
+﻿using Microsoft.Practices.Unity;
+using System;
+using System.Reflection;
+using System.Web;
+using System.Web.UI;
+
+public class UnityPageHandlerFactory : System.Web.UI.PageHandlerFactory
+{
+
+    //ASP.NET Web Forms 框架會呼叫此 handler 物件的 GetHandler 方法來建立 Page 物件。
+    //在 GetHandler 方法中，先利用父類別來建立 Page 物件，然後緊接著進行 Property Injection 的處理。
+    //首先，從 Application["Container"] 中取出上一個步驟所建立的 DI 容器，
+    //接著找出目前的 Page 物件有宣告哪些公開屬性，
+    //然後利用 DI 容器來逐一解析各屬性的型別，並將建立的物件指派給屬性。
+    //靜態方法 GetInjectableProperties 會找出指定型別所宣告的所有公開屬性，
+    //並傳回呼叫端。注意這裡只針對「Page 類別本身所宣告的公開屬性」來進行 Property Injection，
+    //這樣就不用花時間在處理由父類別繼承而來的數十個公開屬性。
+    public override IHttpHandler GetHandler(HttpContext context, string requestType, string virtualPath, string path)
+    {
+        Page page = base.GetHandler(context, requestType, virtualPath, path) as Page;
+        if (page != null)
+        {
+            var container = context.Application["Container"] as IUnityContainer;
+            var properties = GetInjectableProperties(page.GetType());
+
+            foreach (var prop in properties)
+            {
+                try
+                {
+                    //解析是否有註冊的Service屬性欄位
+                    var service = container.Resolve(prop.PropertyType);
+                    if (service != null)
+                    {
+                        prop.SetValue(page, service,null);
+                    }
+                }
+                catch
+                {
+                    // 沒辦法解析型別就算了。
+                }
+            }
+        }
+        return page;
+    }
+
+    public static PropertyInfo[] GetInjectableProperties(Type type)
+    {
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        if (props.Length == 0)
+        {
+            // 傳入的型別若是由 ASPX 頁面所生成的類別，那就必須取得其父類別（code-behind 類別）的屬性。
+            props = type.BaseType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        }
+        return props;
+    }
+}

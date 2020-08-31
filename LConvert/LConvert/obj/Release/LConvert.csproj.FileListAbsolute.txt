@@ -1,0 +1,17 @@
+D:\LConvert\LConvert\bin\Release\conn.conf
+D:\LConvert\LConvert\bin\Release\LConvert.exe.config
+D:\LConvert\LConvert\bin\Release\LConvert.exe
+D:\LConvert\LConvert\bin\Release\LConvert.pdb
+D:\LConvert\LConvert\bin\Release\LinqToExcel.dll
+D:\LConvert\LConvert\bin\Release\log4net.dll
+D:\LConvert\LConvert\bin\Release\Newtonsoft.Json.dll
+D:\LConvert\LConvert\bin\Release\Remotion.Data.Linq.dll
+D:\LConvert\LConvert\bin\Release\System.Net.Http.dll
+D:\LConvert\LConvert\bin\Release\Newtonsoft.Json.xml
+D:\LConvert\LConvert\bin\Release\System.Net.Http.xml
+D:\LConvert\LConvert\bin\Release\zh-Hant\System.Net.Http.resources.dll
+D:\LConvert\LConvert\obj\Release\LConvert.Form1.resources
+D:\LConvert\LConvert\obj\Release\LConvert.Properties.Resources.resources
+D:\LConvert\LConvert\obj\Release\LConvert.csproj.GenerateResource.Cache
+D:\LConvert\LConvert\obj\Release\LConvert.exe
+D:\LConvert\LConvert\obj\Release\LConvert.pdb

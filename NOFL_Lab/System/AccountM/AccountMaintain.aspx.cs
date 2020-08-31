@@ -1,0 +1,39 @@
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Web;
+using System.Web.Configuration;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using WayneEntity;
+
+public partial class System_AccountM_AccountMaintain : BasePage
+{
+    public string MyRoleData = "[]";
+    public string MyEnableData = "[]";
+    public string MyCheckData = "[]";
+    public string MyLogoutData = "[]";
+
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        base.AllowHttpMethod("GET");
+        base.DisableTop(false);
+        base.BodyClass = "class='bodybg'";
+
+        if (SystemCode.dict.ContainsKey("AccountM_EnableState"))
+            MyEnableData = JsonConvert.SerializeObject(SystemCode.dict["AccountM_EnableState"].Where(item => item.EnumName != null));
+
+        MyRoleData = JsonConvert.SerializeObject(SystemRole.list.Where(item => item.RoleName != null));
+
+        
+        if (SystemCode.dict.ContainsKey("AccountM_CheckState"))
+            MyCheckData = JsonConvert.SerializeObject(SystemCode.dict["AccountM_CheckState"].Where(item => item.EnumName != null));
+
+        if (SystemCode.dict.ContainsKey("AccountM_LogoutPeriod"))
+            MyLogoutData = JsonConvert.SerializeObject(SystemCode.dict["AccountM_LogoutPeriod"].Where(item => item.EnumName != null));
+    }
+}

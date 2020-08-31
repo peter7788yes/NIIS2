@@ -1,0 +1,4 @@
+/*! NIIS 2016-05-09 */
+
+function checkTabsHeight(){$(".tab").css("height",$($(".here").children()[0]).height()+$($(".here").children()[1]).height())}$(document).ready(function(){$(".tab > ul > li").removeClass("here"),$(".tab > ul > li > ul").css("position","absolute").hide(),$(".tab > ul > li").click(function(){$(this).closest(".tab").find("ul:not(.pageul) > li").removeClass("here").find("> ul").hide(),$(this).addClass("here").find("> ul").show(),checkTabsHeight()}),$(".tab > ul > li > a").focus(function(){$(this).closest(".tab").find("ul:not(.pageul) > li").removeClass("here").find("> ul").hide(),$(this).parent().addClass("here").find("> ul").show(),checkTabsHeight()}),$(window).resize(function(){checkTabsHeight()}),$(".tab").find("ul li:eq(0)").click()});
+//# sourceMappingURL=tab.js.map

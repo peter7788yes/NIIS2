@@ -1,0 +1,15 @@
+D:\LConvert\LConvert\bin\Debug\LConvert.exe.config
+D:\LConvert\LConvert\bin\Debug\LConvert.exe
+D:\LConvert\LConvert\bin\Debug\LConvert.pdb
+D:\LConvert\LConvert\bin\Debug\Newtonsoft.Json.dll
+D:\LConvert\LConvert\bin\Debug\System.Net.Http.dll
+D:\LConvert\LConvert\bin\Debug\Newtonsoft.Json.xml
+D:\LConvert\LConvert\bin\Debug\System.Net.Http.xml
+D:\LConvert\LConvert\bin\Debug\zh-Hant\System.Net.Http.resources.dll
+D:\LConvert\LConvert\obj\Debug\LConvert.csprojResolveAssemblyReference.cache
+D:\LConvert\LConvert\obj\Debug\LConvert.Properties.Resources.resources
+D:\LConvert\LConvert\obj\Debug\LConvert.csproj.GenerateResource.Cache
+D:\LConvert\LConvert\obj\Debug\LConvert.exe
+D:\LConvert\LConvert\obj\Debug\LConvert.pdb
+D:\LConvert\LConvert\obj\Debug\LConvert.Form1.resources
+D:\LConvert\LConvert\bin\Debug\conn.conf

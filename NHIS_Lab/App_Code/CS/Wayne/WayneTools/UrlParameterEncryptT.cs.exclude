@@ -1,0 +1,39 @@
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Configuration;
+
+/// <summary>
+/// UrlParameterVM 的摘要描述
+/// </summary>
+public class UrlParameterEncryptT 
+{
+
+    public UrlParameterEncryptT()
+	{
+	
+	}
+    public OutSecretVM GetOutSecret(BaseUrlSecret myObject)
+    {
+        OutSecretVM VM = new OutSecretVM();
+        string date = myObject.ProduceDate.ToString("yyyyMMdd");
+        VM.Message = JsonConvert.SerializeObject(myObject);
+        VM.Checksum = int.Parse(date);
+        return VM;
+
+    }
+
+    public string GetOutSecretJson(BaseUrlSecret myObject)
+    {
+        return JsonConvert.SerializeObject(GetOutSecret(myObject));
+    }
+
+    public string GetOutSecretJsonWithEncrypt(BaseUrlSecret myObject)
+    {
+        return QueryStringEncryptToolS.Encrypt(GetOutSecretJson(myObject)); 
+    }
+   
+   
+}

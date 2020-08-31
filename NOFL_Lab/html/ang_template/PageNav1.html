@@ -1,0 +1,34 @@
+﻿<h2>PageNav1.html</h2>
+<style>
+li {
+    display: inline;
+}
+</style>
+<div class="page" ng-cloak>
+    共<em>{{pageModelD.rdCount}}</em>筆資料，第<em>{{pageModelD.pgNow}}/{{pageModelD.pgCount}}</em>頁。
+    <!--{{pageModelD.pgArray}}-->
+    <!-- <ul ng-repeat="item in pageModelD.pgArray">-->
+    <ul>
+        <li class="first" ng-click="changePageD({pgIndex:1})" ng-if="pageModelD.pgNow>pageModelD.pgStart" style="color:gray" >
+            <img src="" alt="第一頁" title="第一頁">
+        </li>
+        <li class="prev" ng-click="changePageD({pgIndex:pageModelD.pgNow-1})" ng-if="pageModelD.pgNow>1" style="color:red">
+            <img src="" alt="上一頁" title="上一頁" >
+        </li>
+        <li class="prev_range" ng-click="changePageD({pgIndex:(Math.floor(pageModelD.pgNow/pageModelD.pgRange)-1)*pageModelD.pgRange+1})" ng-if="pageModelD.pgNow>pageModelD.pgRange" style="color:orange">
+              <img src="" alt="上{{pageModelD.pgRange}}頁" title="上{{pageModelD.pgRange}}頁">
+        </li>
+        <ul ng-repeat="item in pageModelD.pgArray">
+            <li ng-click="changePageD({pgIndex:item})" ng-style="pageModelD.pgNow == item  ? {'color':'red'} :{}">{{item}}</li>
+        </ul>
+        <li class="next_range" ng-click="changePageD({pgIndex:(Math.floor(pageModelD.pgNow/pageModelD.pgRange)+1)*pageModelD.pgRange+1})" ng-if="pageModelD.pgNow < pageModelD.pgCount && (pageModelD.pgCount - pageModelD.pgNow)>=pageModelD.pgRange" style="color:green">
+             <img src="" alt="下{{pageModelD.pgRange}}頁" title="下{{pageModelD.pgRange}}頁">
+        </li> 
+        <li class="next" ng-click="changePageD({pgIndex:pageModelD.pgNow+1})" ng-if="pageModelD.pgNow<pageModelD.pgCount" style="color:blue">
+             <img src="" alt="下一頁" title="下一頁" >
+        </li> 
+        <li class="last" ng-click="changePageD({pgIndex:pageModelD.pgCount})" ng-if="pageModelD.pgNow != pageModelD.pgCount" style="color:gray" >
+             <img src="" alt="最後一頁" title="最後一頁">
+        </li>
+    </ul>
+</div>

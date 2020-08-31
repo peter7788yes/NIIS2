@@ -1,0 +1,140 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+
+public partial class CaseMaintain_SetOrgRegion : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (!Page.IsPostBack)
+        {
+          List<SystemOrgVM> list =  SystemOrg.list ;
+          ddlOrg.Items.Add(new ListItem("請選擇", ""));
+          foreach (SystemOrgVM o in list)  ddlOrg.Items.Add(new ListItem(o.OrgName, o.ID.ToString()));
+
+          DataTable dt = (DataTable)DBUtil.DBOp("ConnDB", @"SELECT 0 RegionID,'請選擇' RegionName   union all  SELECT [RegionID] ,[RegionName]   FROM [dbo].[R_Region]   "
+                , new string[] { }, NSDBUtil.CmdOpType.ExecuteReaderReturnDataTable);
+          ddlRegionID.DataTextField = "RegionName";
+          ddlRegionID.DataValueField = "RegionID";
+             ddlRegionID.DataSource = dt;
+             ddlRegionID.DataBind();
+
+             dt.Dispose();
+
+            dt = (DataTable)DBUtil.DBOp("ConnDB", @" SELECT 0 id,'請選擇' AreaName  union all   SELECT [id] ,[AreaName]    FROM [dbo].[S_SystemAreaCode] where AreaLevel=1 "
+                 , new string[] { }, NSDBUtil.CmdOpType.ExecuteReaderReturnDataTable);
+             ddlCounty.DataTextField = "AreaName";
+             ddlCounty.DataValueField = "ID";
+             ddlCounty.DataSource = dt;
+             ddlCounty.DataBind();
+        }
+    }
+
+
+    protected void BindData( )
+    {
+    
+   DataTable dt = (DataTable)DBUtil.DBOp("ConnDB", @" 
+SELECT [SettingID]
+      ,c.AreaName CountyName
+      ,t.AreaName TownName
+      ,isnull(v.AreaName,'不明') VillageName 
+  FROM [dbo].[R_RegionSetting]
+left outer join S_SystemAreaCode c on c.id = [CountyID]
+left outer join S_SystemAreaCode t on t.id = [TownID]
+left outer join S_SystemAreaCode v on v.id = [VillageID]
+where [RegionID]={0}
+
+
+"
+            , new string[] { ddlRegionID.SelectedValue }, NSDBUtil.CmdOpType.ExecuteReaderReturnDataTable);
+
+        GridView1.DataSource = dt;
+        GridView1.DataBind();
+
+
+    }
+
+
+
+
+  
+
+    protected void ddlOrg_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        SystemOrgRegion.Update();
+        SetALLUnVisible();
+        if (ddlOrg.SelectedValue != "")
+        {
+            SystemOrgVM o = SystemOrg.GetVM(Convert.ToInt32(ddlOrg.SelectedValue));
+
+            
+            if (o.OrgLevel == 4)
+            {
+                TR_SelectRegion.Visible = true;
+               List<SystemOrgRegionVM>  RegionList =  SystemOrgRegion.GetOrgRegion(o.ID) ;
+               if (RegionList != null && RegionList.Count > 0)
+                   ddlRegionID.SelectedValue = RegionList.First().RegionID.ToString();
+               else
+                   ddlRegionID.SelectedValue = "0";
+
+               BindData();
+
+            }
+            if (o.OrgLevel == 3)
+            {
+                TR_SelectCounty.Visible = true;
+                 
+
+                List<SystemOrgRegionCountyVM> CountyList = SystemOrgRegion.GetOrgRegionCounty(o.ID);
+                if (CountyList != null && CountyList.Count > 0)
+                    ddlCounty.SelectedValue = CountyList.First().CountyID.ToString();
+                else
+                    ddlCounty.SelectedValue = "0";
+
+                GridView1.DataSource = null;
+                GridView1.DataBind();
+            }
+            if (o.OrgLevel == 2)
+            {
+                TR_SelectCountyS.Visible = true;
+            }
+            if (o.OrgLevel == 1)
+            {
+                TR_ALL.Visible = true;
+            }
+        }
+    }
+    protected void SetALLUnVisible()
+    {
+        TR_SelectRegion.Visible = false;
+        TR_SelectCounty.Visible = false;
+        TR_SelectCountyS.Visible = false;
+        TR_ALL.Visible = false;
+    
+    }
+
+
+    protected void ddlRegionID_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        BindData();
+    }
+    protected void Button1_Click1(object sender, EventArgs e)
+    {
+
+          DBUtil.DBOp("ConnDB", @"exec dbo.usp_Region_xSaveRegionID {0},{1} "
+            , new string[] { ddlOrg.SelectedValue, ddlRegionID.SelectedValue }, NSDBUtil.CmdOpType.ExecuteNonQuery);
+          SystemOrgRegion.Update();
+    }
+    protected void Button2_Click(object sender, EventArgs e)
+    {
+
+        DBUtil.DBOp("ConnDB", @"exec dbo.usp_Region_xSaveRegionCountyID {0},{1} "
+          , new string[] { ddlOrg.SelectedValue, ddlCounty.SelectedValue }, NSDBUtil.CmdOpType.ExecuteNonQuery);
+        SystemOrgRegion.Update();
+    }
+}

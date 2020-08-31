@@ -1,0 +1,19 @@
+﻿<section class="page" ng-hide="VMD.isHide">
+    <ul>
+        <li class="first" ng-click="changePageD({pgIndex:1})" ng-if="VMD.pgNow>1" >
+            <a href="javascript:void(0);"></a>
+        </li>
+        <li class="prev" ng-click="changePageD({pgIndex:VMD.pgNow-1})" ng-if="VMD.pgNow>1">
+           <a href="javascript:void(0);"></a>
+        </li>
+        <li ng-class="VMD.pgNow==item ? 'here' : '' " ng-repeat="item in VMD.pgArray" ng-click="VMD.pgNow != item && changePageD({pgIndex:item})" >
+            <a href="javascript:void(0);" ng-bind="item"></a> 
+        </li>
+        <li class="next" ng-click="changePageD({pgIndex:VMD.pgNow+1})" ng-if="VMD.pgNow>0 && VMD.pgCount>1 && VMD.pgNow<VMD.pgCount" >
+             <a href="javascript:void(0);"></a>
+        </li> 
+        <li class="last" ng-click="changePageD({pgIndex:VMD.pgCount})" ng-if="VMD.pgNow>0 && VMD.pgCount>1 && (VMD.pgNow != VMD.pgCount)"  >
+            <a href="javascript:void(0);"></a>
+        </li>
+    </ul>
+</section>

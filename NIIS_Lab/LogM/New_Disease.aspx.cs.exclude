@@ -1,0 +1,24 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using WayneTools;
+
+public partial class New_Disease : BasePage
+{
+    public string getAccount { get; set; }
+    protected new void Page_Load(object sender, EventArgs e)
+    {
+        base.DisableTop(false);
+
+        UserVM user = AuthServer.GetLoginUser();
+        //使用者姓名(使用者帳號, 使用者單位)於YYY.MM.DD HH:MM:SS由##使用者IP##登入
+
+        getAccount = string.Format("{0}"
+                                   , user.LoginName);
+    }
+}

@@ -1,0 +1,9 @@
+@charset "utf-8";
+/* CSS Document */
+.list01{ margin:0 0 0 10px}
+
+.list01 ul{ margin:0; padding:0}
+.list01 ul li{list-style-type:none; margin:0 0 10px 0; background-image:url(../images/icon02.png); background-repeat:no-repeat; background-position:0 5px; padding:0 0 0 10px}
+.list01 ul li span{ margin:0 5px 0 0}
+/*----------*/
+.remark{margin:0 0 10px 10px}
